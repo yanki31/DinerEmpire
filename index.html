@@ -819,7 +819,11 @@ const EXT=[
   {id:'fountain',cat:'Mobilya',n:'Çeşme',e:'⛲',c:150,pop:8,hap:8},
   {id:'statue',cat:'Dekor',n:'Heykel',e:'🏆',c:200,pop:12,hap:5},
 ];
-const DECO=[{e:'🖼️',n:'Tablo',c:35,b:2},{e:'🎵',n:'Müzik',c:30,b:2},{e:'🕰️',n:'Saat',c:40,b:2},{e:'💡',n:'Işık',c:45,b:3}];
+const DECO=[
+  {e:'🪴',n:'Bitki',c:25,b:1},{e:'🎵',n:'Müzik',c:30,b:2},
+  {e:'🖼️',n:'Tablo',c:35,b:2},{e:'🕰️',n:'Saat',c:40,b:2},
+  {e:'💡',n:'Lamba',c:45,b:3},{e:'🗿',n:'Heykel',c:60,b:4},
+  {e:'⛲',n:'Çeşme',c:80,b:5}];
 const QZ=[
   {q:'Pizza hangi ülkeden gelir?',opts:['Fransa','İtalya','İspanya','Yunanistan'],ans:1,ing:'cheese'},
   {q:'Sushi hangi ülkeden gelir?',opts:['Çin','Kore','Japonya','Tayland'],ans:2,ing:'fish'},
@@ -913,10 +917,14 @@ function gridCell(){
   return {cw,ch,ox:RX+S*2,oy:FY+S*2.5};
 }
 
+function cellTaken(c,r,skipTable,skipDeco){
+  if(tables.some((t,j)=>j!==skipTable&&j<tableCount&&t.gc===c&&t.gr===r))return true;
+  if(wallD.some((d,j)=>j!==skipDeco&&d.gc!==undefined&&d.gc===c&&d.gr===r))return true;
+  return false;
+}
 function findFreeCell(skipIdx){
   for(let r=0;r<GRID_ROWS;r++)for(let c=0;c<GRID_COLS;c++){
-    const taken=tables.some((t,j)=>j!==skipIdx&&j<tableCount&&t.gc===c&&t.gr===r);
-    if(!taken) return {c,r};
+    if(!cellTaken(c,r,skipIdx,-1)) return {c,r};
   }
   return {c:0,r:0};
 }
@@ -1305,6 +1313,7 @@ function draw(){
   }
 
   // Tables
+  drawFloorDecos();
   if(editMode) drawEditGrid();
   tables.forEach((t,i)=>{
     if(editMode && i===dragIdx){
@@ -1319,6 +1328,12 @@ function draw(){
       drawTable(t,i);
     }
   });
+  // Sürüklenen dekor imleci takip eder
+  if(editMode && dragKind==='deco' && dragIdx>=0 && wallD[dragIdx]){
+    G.globalAlpha=0.85;
+    drawDecoToken(wallD[dragIdx],dragPX,dragPY,getLay().S);
+    G.globalAlpha=1;
+  }
 
   // Door
   {
@@ -1558,6 +1573,26 @@ function drawTable(t,i){
     G.font=`bold ${S*1.0}px 'Press Start 2P',monospace`;
     G.textAlign='center';G.textBaseline='middle';
     G.fillText(lbls[state], cx, y+h-S*0.3);
+  }
+
+  // ── SABIR GÖSTERGESİ (RC tarzı) ──
+  if((state==='wait'&&t.waitStart)||(state==='done'&&t.doneStart)){
+    const total = state==='wait'?11000:20000;
+    const start = state==='wait'?t.waitStart:t.doneStart;
+    const left = Math.max(0, 1-(Date.now()-start)/total);
+    const pEmoji = left>0.55?'😊':left>0.25?'😐':'😡';
+    const pCol = left>0.55?'#40d060':left>0.25?'#f0c030':'#e04040';
+    const pbx=x+S*0.3, pby=y-S*4.3, pbw=S*5.5, pbh=S*1.1;
+    G.fillStyle='rgba(0,0,0,0.55)';
+    G.beginPath();G.roundRect(pbx-S*0.3,pby-S*0.35,pbw+S*3.2,pbh+S*0.7,S*0.5);G.fill();
+    G.fillStyle='rgba(255,255,255,0.15)';
+    G.beginPath();G.roundRect(pbx+S*2.4,pby,pbw,pbh,S*0.4);G.fill();
+    G.fillStyle=pCol;
+    G.beginPath();G.roundRect(pbx+S*2.4,pby,Math.max(S*0.5,pbw*left),pbh,S*0.4);G.fill();
+    G.imageSmoothingEnabled=true;
+    G.font=`${S*1.9}px serif`;G.textAlign='center';G.textBaseline='middle';
+    G.fillText(pEmoji,pbx+S*1.1,pby+pbh/2);
+    G.imageSmoothingEnabled=false;
   }
 
   // ── MÜŞTERİ KONUŞMA BALONU ──
@@ -1806,7 +1841,7 @@ function onTable(i){
     if(leaves[i]){clearTimeout(leaves[i]);leaves[i]=null;}
     if(cooks[i])clearTimeout(cooks[i]);
     cooks[i]=setTimeout(()=>{
-      t.state='done';ch.status='idle';buildWB();
+      t.state='done';t.doneStart=Date.now();ch.status='idle';buildWB();
       notify(rec.e+' '+rec.n+' HAZIR!');
       // Hazır yemeği servis et butonuna basılmazsa müşteri 20sn sonra gider
       leaves[i]=setTimeout(()=>{
@@ -1872,7 +1907,7 @@ function spawnCust(){
   const i=empty[Math.floor(Math.random()*empty.length)];
   const emojis=['👩','👨','🧑','👴','👵','🧔','👱','🧕'];
   const cust=emojis[Math.floor(Math.random()*emojis.length)];
-  tables[i].state='wait';tables[i].cust=cust;
+  tables[i].state='wait';tables[i].cust=cust;tables[i].waitStart=Date.now();
   const {RX,FY,RW,FH,S}=getLay();
   walkers.push({emoji:cust,tableIdx:i,x:RX+RW/2,y:FY+FH-S*3,tx:tables[i].x+tables[i].w/2,ty:tables[i].y+tables[i].h*.55,frame:0,alpha:1,seated:false,exiting:false});
   if(leaves[i])clearTimeout(leaves[i]);
@@ -1901,7 +1936,7 @@ function visitN(name){
 }
 
 /* ══ DÜZENLEME MODU (Restaurant City edit) ══ */
-let editMode=false, dragIdx=-1, dragPX=0, dragPY=0;
+let editMode=false, dragIdx=-1, dragPX=0, dragPY=0, dragKind='table';
 
 function toggleEdit(){
   editMode=!editMode;
@@ -1911,6 +1946,35 @@ function toggleEdit(){
     ?'background:#403010;border-color:#f5c842;color:#f5c842;font-size:7px;padding:3px 5px'
     :'background:#1a1a28;border-color:#6080a0;color:#90b0d0;font-size:7px;padding:3px 5px';
   notify(editMode?'✏️ DÜZENLEME: masaları sürükle-bırak':'✓ Düzenleme kapatıldı');
+}
+
+function drawDecoToken(d,px,py,S){
+  // Kaide gölgesi
+  G.fillStyle='rgba(0,0,0,0.22)';
+  G.beginPath();G.ellipse(px,py+S*0.5,S*2.6,S*0.9,0,0,Math.PI*2);G.fill();
+  // Kaide
+  const bg=G.createRadialGradient(px,py-S*0.4,S*0.4,px,py,S*2.5);
+  bg.addColorStop(0,'#e8d8b8');bg.addColorStop(1,'#b09060');
+  G.fillStyle=bg;
+  G.beginPath();G.ellipse(px,py,S*2.3,S*1.0,0,0,Math.PI*2);G.fill();
+  G.strokeStyle='rgba(90,60,30,0.4)';G.lineWidth=S*0.22;
+  G.beginPath();G.ellipse(px,py,S*2.3,S*1.0,0,0,Math.PI*2);G.stroke();
+  // Dekor emojisi
+  G.imageSmoothingEnabled=true;
+  G.font=`${S*4.4}px serif`;G.textAlign='center';G.textBaseline='bottom';
+  G.fillText(d.e,px,py+S*0.5);
+  G.imageSmoothingEnabled=false;
+}
+
+function drawFloorDecos(){
+  const {S}=getLay();
+  const {cw,ch,ox,oy}=gridCell();
+  wallD.forEach((d,i)=>{
+    if(d.gc===undefined||d.gc===null){const cell=findFreeCell(-1);d.gc=cell.c;d.gr=cell.r;}
+    if(editMode&&dragKind==='deco'&&dragIdx===i)return; // sürüklenen ayrı çizilir
+    const px=ox+d.gc*cw+cw/2, py=oy+d.gr*ch+ch*0.62;
+    drawDecoToken(d,px,py,S);
+  });
 }
 
 function drawEditGrid(){
@@ -1927,18 +1991,23 @@ function drawEditGrid(){
     G.beginPath();G.moveTo(ox,oy+r*ch);G.lineTo(ox+GRID_COLS*cw,oy+r*ch);G.stroke();
   }
   G.setLineDash([]);
-  // Dolu hücreler
+  // Dolu hücreler (masalar yeşil, dekorlar mor)
   tables.forEach((t,i)=>{
-    if(i>=tableCount||i===dragIdx)return;
+    if(i>=tableCount||(dragKind==='table'&&i===dragIdx))return;
     G.fillStyle='rgba(100,200,120,0.08)';
     G.fillRect(ox+t.gc*cw,oy+t.gr*ch,cw,ch);
+  });
+  wallD.forEach((d,i)=>{
+    if(d.gc===undefined||(dragKind==='deco'&&i===dragIdx))return;
+    G.fillStyle='rgba(170,110,230,0.10)';
+    G.fillRect(ox+d.gc*cw,oy+d.gr*ch,cw,ch);
   });
   // Sürükleme hedef hücresi (yeşil=boş, kırmızı=dolu)
   if(dragIdx>=0){
     let c=Math.floor((dragPX-ox)/cw), rr=Math.floor((dragPY-oy)/ch);
     c=Math.max(0,Math.min(GRID_COLS-1,c));
     rr=Math.max(0,Math.min(GRID_ROWS-1,rr));
-    const occupied=tables.some((t,j)=>j!==dragIdx&&j<tableCount&&t.gc===c&&t.gr===rr);
+    const occupied=cellTaken(c,rr,dragKind==='table'?dragIdx:-1,dragKind==='deco'?dragIdx:-1);
     G.fillStyle=occupied?'rgba(220,60,60,0.28)':'rgba(80,220,120,0.28)';
     G.fillRect(ox+c*cw,oy+rr*ch,cw,ch);
     G.strokeStyle=occupied?'#e05050':'#50d080';
@@ -1948,11 +2017,11 @@ function drawEditGrid(){
   // Üst bilgi bandı
   G.fillStyle='rgba(0,0,0,0.6)';
   const {RX,FY,RW}=getLay();
-  G.beginPath();G.roundRect(RX+RW/2-S*14,FY+S*0.3,S*28,S*2,S*0.4);G.fill();
+  G.beginPath();G.roundRect(RX+RW/2-S*17,FY+S*0.3,S*34,S*2,S*0.4);G.fill();
   G.fillStyle='#f5c842';
-  G.font=`bold ${S*0.95}px 'Press Start 2P',monospace`;
+  G.font=`bold ${S*0.82}px 'Press Start 2P',monospace`;
   G.textAlign='center';G.textBaseline='middle';
-  G.fillText('✏️ MASALARI SÜRÜKLE — ✕ İLE ÇIK',RX+RW/2,FY+S*1.3);
+  G.fillText('✏️ MASA & DEKOR SÜRÜKLE — DEKORU YUKARI AT = SAT',RX+RW/2,FY+S*1.3);
 }
 
 cv.addEventListener('pointerdown',e=>{
@@ -1960,10 +2029,23 @@ cv.addEventListener('pointerdown',e=>{
   const r=cv.getBoundingClientRect();
   const mx=(e.clientX-r.left)*(W/r.width), my=(e.clientY-r.top)*(H/r.height);
   const {S}=getLay();
+  // Önce masalar (büyük hedef)
   for(let i=tableCount-1;i>=0;i--){
     const t=tables[i]; if(!t.w)continue;
     if(mx>=t.x-S&&mx<=t.x+t.w+S&&my>=t.y-S*3.5&&my<=t.y+t.h+S*3.5){
-      dragIdx=i; dragPX=mx; dragPY=my;
+      dragKind='table'; dragIdx=i; dragPX=mx; dragPY=my;
+      try{cv.setPointerCapture(e.pointerId);}catch(_){}
+      e.preventDefault();
+      return;
+    }
+  }
+  // Sonra dekorlar
+  const {cw,ch,ox,oy}=gridCell();
+  for(let i=wallD.length-1;i>=0;i--){
+    const d=wallD[i]; if(d.gc===undefined)continue;
+    const px=ox+d.gc*cw+cw/2, py=oy+d.gr*ch+ch*0.62;
+    if(mx>=px-S*3&&mx<=px+S*3&&my>=py-S*5&&my<=py+S*1.5){
+      dragKind='deco'; dragIdx=i; dragPX=mx; dragPY=my;
       try{cv.setPointerCapture(e.pointerId);}catch(_){}
       e.preventDefault();
       return;
@@ -1980,16 +2062,29 @@ cv.addEventListener('pointermove',e=>{
 cv.addEventListener('pointerup',e=>{
   if(!editMode||dragIdx<0)return;
   const {cw,ch,ox,oy}=gridCell();
+  const inGrid = dragPY >= oy - ch*0.2;
   let c=Math.floor((dragPX-ox)/cw), rr=Math.floor((dragPY-oy)/ch);
   c=Math.max(0,Math.min(GRID_COLS-1,c));
   rr=Math.max(0,Math.min(GRID_ROWS-1,rr));
-  const occupied=tables.some((t,j)=>j!==dragIdx&&j<tableCount&&t.gc===c&&t.gr===rr);
-  if(!occupied){
-    tables[dragIdx].gc=c; tables[dragIdx].gr=rr;
+  if(dragKind==='table'){
+    if(!cellTaken(c,rr,dragIdx,-1)){
+      tables[dragIdx].gc=c; tables[dragIdx].gr=rr;
+    } else notify('❌ O hücre dolu!');
   } else {
-    notify('❌ O hücre dolu!');
+    const d=wallD[dragIdx];
+    if(!inGrid){
+      // Mutfağa/dışarı sürüklendi → sat (%50)
+      const sell=Math.round((d.c||30)*0.5);
+      coins+=sell; decoB=Math.max(0,decoB-(d.b||0));
+      wallD.splice(dragIdx,1);
+      logF('i','Dekor satıldı: '+d.n,sell);
+      notify('🗑️ '+d.e+' satıldı +'+sell+'G');
+      hudU();
+    } else if(!cellTaken(c,rr,-1,dragIdx)){
+      d.gc=c; d.gr=rr;
+    } else notify('❌ O hücre dolu!');
   }
-  dragIdx=-1;
+  dragIdx=-1; dragKind='table';
 });
 
 cv.addEventListener('click',e=>{
@@ -2362,7 +2457,17 @@ function rEG(cat){
 function buyExt(id){const tmpl=EXT.find(i=>i.id===id);if(!tmpl)return;if(coins<tmpl.c){notify('YETERSIZ!');return;}coins-=tmpl.c;logF('e',tmpl.e+' '+tmpl.n,tmpl.c);extItems.push({...tmpl});calcExt();const{RX,RW,RY,RH,S}=getLay();extObjs.push({e:tmpl.e,x:RX+S*3+Math.random()*(RW-S*6),y:RY+RH+S*3+Math.random()*S*8});closeM('m-ext');notify(tmpl.e+' BAHCEYE EKLENDI!');hudU();}
 function rmExt(id){const idx=extItems.findIndex(i=>i.id===id);if(idx<0)return;extItems.splice(idx,1);extObjs.splice(idx,1);calcExt();notify('KALDIRILDI');setTimeout(bExt,50);}
 function bDeco(){const c=document.getElementById('c-deco');c.innerHTML='<p style="font-size:7px;color:#555;margin-bottom:7px;font-family:monospace">SERVIS BONUSU VERIR</p>';DECO.forEach(d=>{const el=document.createElement('div');el.className='mcard';el.innerHTML=`<div class="em">${d.e}</div><div class="inf"><div class="nm">${d.n}</div><div class="ds">+${d.b}G/SERVIS</div><div class="pr">${d.c}G</div></div><button class="gbtn" ${coins<d.c?'disabled':''} onclick="buyD('${d.n}','${d.e}',${d.c},${d.b})">AL</button>`;c.appendChild(el);});}
-function buyD(n,e,cost,b){if(coins<cost){notify('YETERSIZ!');return;}coins-=cost;decoB+=b;wallD.push({e,n});logF('e','Dekor '+n,cost);notify(e+' +'+b+'G BONUS');hudU();}
+function buyD(n,e,cost,b){
+  if(coins<cost){notify('YETERSIZ!');return;}
+  const occ=tableCount+wallD.filter(d=>d.gc!==undefined).length;
+  if(occ>=GRID_COLS*GRID_ROWS){notify('Zemin dolu! Önce yer aç.');return;}
+  const cell=findFreeCell(-1);
+  coins-=cost;decoB+=b;
+  wallD.push({e,n,b,c:cost,gc:cell.c,gr:cell.r});
+  logF('e','Dekor '+n,cost);
+  notify(e+' zemine kondu! ✏️ ile taşı');
+  hudU();
+}
 let qDone=false;
 function bQuiz(){
   const c=document.getElementById('c-quiz');
