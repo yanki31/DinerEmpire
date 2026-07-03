@@ -1053,6 +1053,20 @@ function draw(){
     G.restore();
   }
 
+  // ── DUVAR KAĞIDI (arka duvar, RC tarzı çizgili) ──
+  {
+    const wpH=S*2.6;
+    G.save();G.beginPath();G.rect(RX,RY,RW,wpH);G.clip();
+    G.fillStyle='#f0e0c0';G.fillRect(RX,RY,RW,wpH);
+    G.fillStyle='#d8a070';
+    const stw=S*2.2;
+    for(let sx2=RX;sx2<RX+RW;sx2+=stw*2){G.fillRect(sx2,RY,stw,wpH);}
+    G.fillStyle='rgba(255,255,255,0.25)';G.fillRect(RX,RY,RW,S*0.5);
+    G.restore();
+    G.fillStyle='#8a6838';G.fillRect(RX,RY+wpH,RW,S*0.55);
+    G.fillStyle='rgba(255,255,255,0.2)';G.fillRect(RX,RY+wpH,RW,S*0.2);
+  }
+
   const sy=RY+S*3;
 
   // ── OCAKLAR (stoveCount kadar çiz) ──
@@ -1226,29 +1240,22 @@ function draw(){
 
   // ── ZEMİN: sıcak parke + ışık havuzları ──
   {
-    // Taban: zengin ahşap gradient (üstten alta hafif koyulaşır)
-    const fbg=G.createLinearGradient(0,FY,0,FY+FH);
-    fbg.addColorStop(0,'#d4b070');fbg.addColorStop(0.5,'#c8a45e');fbg.addColorStop(1,'#b08c48');
-    G.fillStyle=fbg;
-    G.fillRect(RX,FY,RW,FH);
-
-    // Parke tahtaları
-    const plankH=S*4.5, plankW=S*18;
-    for(let row=0;row*plankH<FH;row++){
-      const py2=FY+row*plankH;
-      // Her tahta sırası hafif farklı ton
-      if(row%3===1){G.fillStyle='rgba(120,85,40,0.06)';G.fillRect(RX,py2,RW,plankH);}
-      if(row%3===2){G.fillStyle='rgba(255,230,180,0.05)';G.fillRect(RX,py2,RW,plankH);}
-      // Yatay çizgi
-      G.strokeStyle='rgba(90,60,25,0.18)';G.lineWidth=1;
-      G.beginPath();G.moveTo(RX,py2);G.lineTo(RX+RW,py2);G.stroke();
-      // Dikey ek yerleri (kaydırmalı)
-      const offset=row%2===0?0:plankW/2;
-      G.strokeStyle='rgba(90,60,25,0.12)';
-      for(let x=RX+offset;x<RX+RW;x+=plankW){
-        G.beginPath();G.moveTo(x,py2);G.lineTo(x,py2+plankH);G.stroke();
+    // RC tarzı damalı fayans (krem + şeftali)
+    G.save();G.beginPath();G.rect(RX,FY,RW,FH);G.clip();
+    const tile=S*5.2;
+    for(let ty3=0;ty3*tile<FH+tile;ty3++){
+      for(let tx3=0;tx3*tile<RW+tile;tx3++){
+        const even=(tx3+ty3)%2===0;
+        G.fillStyle=even?'#eed9a9':'#ddbb85';
+        G.fillRect(RX+tx3*tile,FY+ty3*tile,tile,tile);
+        G.fillStyle=even?'rgba(255,255,255,0.12)':'rgba(0,0,0,0.05)';
+        G.fillRect(RX+tx3*tile,FY+ty3*tile,tile,S*0.4);
       }
     }
+    G.strokeStyle='rgba(120,85,45,0.16)';G.lineWidth=1;
+    for(let gx2=RX;gx2<=RX+RW;gx2+=tile){G.beginPath();G.moveTo(gx2,FY);G.lineTo(gx2,FY+FH);G.stroke();}
+    for(let gy2=FY;gy2<=FY+FH;gy2+=tile){G.beginPath();G.moveTo(RX,gy2);G.lineTo(RX+RW,gy2);G.stroke();}
+    G.restore();
 
     // ── TAVAN LAMBALARINDAN IŞIK HAVUZLARI ──
     // 3 sarkıt lamba, her birinin altında sıcak ışık dairesi
@@ -1612,11 +1619,12 @@ function drawTable(t,i){
     G.lineTo(bx2+S*2.6, by2+S*3.4);
     G.lineTo(bx2+S*1.8, by2+S*4.6);
     G.closePath();G.fill();
-    // Müşteri emoji
+    // Balon içeriği: beklerken ❔, sipariş sonrası YEMEK (RC tarzı)
+    const bubbleEmoji=(state==='cook'||state==='done')&&meal>=0?(RCP[menu[meal]]?.e||cust):'❔';
     G.imageSmoothingEnabled=true;
     G.font=`${S*2.4}px serif`;
     G.textAlign='center';G.textBaseline='middle';
-    G.fillText(cust, bx2+S*2.5, by2+S*1.7);
+    G.fillText(bubbleEmoji, bx2+S*2.5, by2+S*1.7);
     G.imageSmoothingEnabled=false;
   }
 }
@@ -1853,6 +1861,7 @@ function onTable(i){
           const lay5=getLay();
           const tw=walkers.find(w=>w.tableIdx===i&&!w.exiting);
           if(tw){tw.exiting=true;tw.seated=false;tw.tx=lay5.RX+lay5.RW/2;tw.ty=lay5.FY+lay5.FH-lay5.S*2;}
+          seatFromQueue();
         }
       },20000);
     },dur);
@@ -1878,6 +1887,7 @@ function onTable(i){
     // Yıldız float göster
     const starsDisp = stars >= 4.5 ? '⭐⭐⭐⭐⭐' : stars >= 4 ? '⭐⭐⭐⭐' : stars >= 3 ? '⭐⭐⭐' : stars >= 2 ? '⭐⭐' : '⭐';
     floats.push({msg:starsDisp, x:t.x+t.w/2, y:t.y-getLay().S*3, col:'#f5c842', life:50, ml:50});
+    if(stars>=4){floats.push({msg:'❤️',x:t.x+t.w*0.25,y:t.y-getLay().S*1.5,col:'#ff6080',life:55,ml:55});}
     hudU();
     const gpE=2+Math.floor(rec.lv/3);
     coins+=earn;awardGP(gpE);happy=Math.min(100,happy+2);
@@ -1893,16 +1903,93 @@ function onTable(i){
       tw.tx=lay3.RX+lay3.RW/2;
       tw.ty=lay3.FY+lay3.FH-lay3.S*2;
     }
+    seatFromQueue();
     const {S}=getLay();
     floats.push({msg:'+'+earn+'G',x:t.x+t.w/2,y:t.y,col:'#f5c842',life:60,ml:60});
     floats.push({msg:'+'+gpE+'GP',x:t.x+t.w/2,y:t.y-S*5,col:'#70c8f0',life:60,ml:60});
     if(Math.random()<.22)spawnTrash();
   }
 }
+/* ══ KAPI KUYRUĞU (RC tarzı) ══ */
+let doorQueue=[]; // {emoji, joinTime, walker}
+const QUEUE_MAX=3, QUEUE_PATIENCE=9000;
+
+function queueSlotPos(idx){
+  const {RX,RW,FY,FH,S}=getLay();
+  return {x:RX+RW*0.5+S*(5.5+idx*5.5), y:FY+FH-S*2};
+}
+
+function joinQueue(){
+  if(doorQueue.length>=QUEUE_MAX){happy=Math.max(0,happy-3);hudU();return;}
+  const emojis=['👩','👨','🧑','👴','👵','🧔','👱','🧕'];
+  const cust=emojis[Math.floor(Math.random()*emojis.length)];
+  const {RX,FY,RW,FH,S}=getLay();
+  const slot=queueSlotPos(doorQueue.length);
+  const wk={emoji:cust,x:RX+RW/2,y:FY+FH-S*0.5,tx:slot.x,ty:slot.y,frame:0,alpha:1,seated:false,exiting:false,inQueue:true};
+  walkers.push(wk);
+  doorQueue.push({emoji:cust,joinTime:Date.now(),walker:wk});
+}
+
+function updateQueuePositions(){
+  doorQueue.forEach((q,idx)=>{
+    const slot=queueSlotPos(idx);
+    if(q.walker){q.walker.tx=slot.x;q.walker.ty=slot.y;q.walker.seated=false;}
+  });
+}
+
+function checkQueuePatience(){
+  const now=Date.now();
+  let changed=false;
+  for(let qi=doorQueue.length-1;qi>=0;qi--){
+    if(now-doorQueue[qi].joinTime>QUEUE_PATIENCE){
+      const q=doorQueue.splice(qi,1)[0];
+      if(q.walker){
+        const L=getLay();
+        q.walker.inQueue=false;q.walker.exiting=true;q.walker.seated=false;
+        q.walker.tx=L.RX+L.RW/2;q.walker.ty=L.FY+L.FH+L.S*2;
+      }
+      happy=Math.max(0,happy-8);
+      notify('😤 Sıradaki müşteri bekleyemedi, gitti!');
+      changed=true;
+    }
+  }
+  if(changed){hudU();updateQueuePositions();}
+}
+
+function seatFromQueue(){
+  if(!doorQueue.length)return;
+  const empty=tables.map((t,idx)=>t.state==='empty'&&t.w>0?idx:-1).filter(x=>x>=0);
+  if(!empty.length)return;
+  const q=doorQueue.shift();
+  const i=empty[0];
+  tables[i].state='wait';tables[i].cust=q.emoji;tables[i].waitStart=Date.now();
+  if(q.walker){
+    q.walker.inQueue=false;q.walker.seated=false;q.walker.exiting=false;
+    q.walker.tableIdx=i;
+    q.walker.tx=tables[i].x+tables[i].w/2;
+    q.walker.ty=tables[i].y+tables[i].h*.55;
+  }
+  updateQueuePositions();
+  notify('🚶 Sıradaki müşteri masaya oturdu!');
+  // Bekleme zamanlayıcısı (spawnCust ile aynı)
+  const cust=q.emoji;
+  if(leaves[i])clearTimeout(leaves[i]);
+  leaves[i]=setTimeout(()=>{
+    if(tables[i]&&tables[i].state==='wait'){
+      tables[i].state='empty';tables[i].cust='';
+      happy=Math.max(0,happy-10);notify(cust+' GITTI! (sipariş alınmadı)');hudU();
+      const lay4=getLay();
+      const tw=walkers.find(w=>w.tableIdx===i&&!w.exiting);
+      if(tw){tw.exiting=true;tw.seated=false;tw.tx=lay4.RX+lay4.RW/2;tw.ty=lay4.FY+lay4.FH-lay4.S*2;}
+      seatFromQueue();
+    }
+  },11000);
+}
+
 function spawnCust(){
   if(!restType) return; // restoran tipi seçilmeden müşteri gelmesin
   const empty=tables.map((t,i)=>t.state==='empty'?i:-1).filter(x=>x>=0);
-  if(!empty.length){happy=Math.max(0,happy-3);hudU();return;}
+  if(!empty.length){joinQueue();return;}
   if(!workers.some(w=>w.role==='waiter'||w.role==='bartender'))return;
   const i=empty[Math.floor(Math.random()*empty.length)];
   const emojis=['👩','👨','🧑','👴','👵','🧔','👱','🧕'];
@@ -1919,6 +2006,7 @@ function spawnCust(){
       const lay4=getLay();
       const tw=walkers.find(w=>w.tableIdx===i&&!w.exiting);
       if(tw){tw.exiting=true;tw.seated=false;tw.tx=lay4.RX+lay4.RW/2;tw.ty=lay4.FY+lay4.FH-lay4.S*2;}
+      seatFromQueue();
     }
   },11000);
 }
@@ -2108,6 +2196,7 @@ setTimeout(spawnCust, 4000);
 setTimeout(restartCustSpawn, 1000);
 setInterval(()=>{
   if(!restType) return; // seçim yapılmadan gün sayma
+  checkQueuePatience();
   dayT++;
   if(dayT>=120){
     endDay();
