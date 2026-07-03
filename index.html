@@ -1042,14 +1042,21 @@ function draw(){
   // ── MUTFAK (tamamen vektörel) ──
   // Mutfak zemini: koyu fayans
   {
-    const kts=S*5;
     G.save();G.beginPath();G.rect(RX,RY,RW,KH);G.clip();
-    G.fillStyle='#8a8a92';G.fillRect(RX,RY,RW,KH);
-    G.strokeStyle='rgba(0,0,0,0.15)';G.lineWidth=1;
-    for(let yy=RY;yy<RY+KH;yy+=kts){G.beginPath();G.moveTo(RX,yy);G.lineTo(RX+RW,yy);G.stroke();}
-    for(let xx=RX;xx<RX+RW;xx+=kts){G.beginPath();G.moveTo(xx,RY);G.lineTo(xx,RY+KH);G.stroke();}
-    // hafif parlaklık
-    G.fillStyle='rgba(255,255,255,0.05)';G.fillRect(RX,RY,RW,KH*0.4);
+    G.fillStyle='#2e7d99';G.fillRect(RX,RY,RW,KH);
+    const kd=S*3.4;
+    for(let iy=-1;iy*kd<KH+kd*2;iy++){
+      const cy0=RY+iy*kd, xoff=(iy%2===0)?0:kd;
+      for(let ix=-1;ix*kd*2<RW+kd*2;ix++){
+        const cx0=RX+ix*kd*2+xoff;
+        G.fillStyle=((ix+iy)%2===0)?'#357f9d':'#2a6d87';
+        G.beginPath();
+        G.moveTo(cx0,cy0-kd);G.lineTo(cx0+kd,cy0);G.lineTo(cx0,cy0+kd);G.lineTo(cx0-kd,cy0);
+        G.closePath();G.fill();
+        G.strokeStyle='rgba(15,50,65,0.3)';G.lineWidth=1;G.stroke();
+      }
+    }
+    G.fillStyle='rgba(255,255,255,0.06)';G.fillRect(RX,RY,RW,KH*0.35);
     G.restore();
   }
 
@@ -1057,11 +1064,16 @@ function draw(){
   {
     const wpH=S*2.6;
     G.save();G.beginPath();G.rect(RX,RY,RW,wpH);G.clip();
-    G.fillStyle='#f0e0c0';G.fillRect(RX,RY,RW,wpH);
-    G.fillStyle='#d8a070';
-    const stw=S*2.2;
-    for(let sx2=RX;sx2<RX+RW;sx2+=stw*2){G.fillRect(sx2,RY,stw,wpH);}
-    G.fillStyle='rgba(255,255,255,0.25)';G.fillRect(RX,RY,RW,S*0.5);
+    // Üst: krem duvar
+    G.fillStyle='#f2ead6';G.fillRect(RX,RY,RW,wpH*0.55);
+    G.fillStyle='rgba(255,255,255,0.3)';G.fillRect(RX,RY,RW,S*0.4);
+    // Alt: ahşap lambri (RC wainscot)
+    const wg4=G.createLinearGradient(0,RY+wpH*0.55,0,RY+wpH);
+    wg4.addColorStop(0,'#9a6b36');wg4.addColorStop(1,'#7c5226');
+    G.fillStyle=wg4;G.fillRect(RX,RY+wpH*0.55,RW,wpH*0.45);
+    G.strokeStyle='rgba(70,45,18,0.5)';G.lineWidth=1;
+    for(let px2=RX;px2<RX+RW;px2+=S*3){G.beginPath();G.moveTo(px2,RY+wpH*0.55);G.lineTo(px2,RY+wpH);G.stroke();}
+    G.fillStyle='#6a4518';G.fillRect(RX,RY+wpH*0.55-S*0.15,RW,S*0.3);
     G.restore();
     G.fillStyle='#8a6838';G.fillRect(RX,RY+wpH,RW,S*0.55);
     G.fillStyle='rgba(255,255,255,0.2)';G.fillRect(RX,RY+wpH,RW,S*0.2);
@@ -1078,10 +1090,10 @@ function draw(){
     G.beginPath();G.roundRect(ox+S*0.4,oy+S*0.4,ow,oh,S*0.5);G.fill();
     // Gövde (paslanmaz çelik)
     const sg2=G.createLinearGradient(ox,oy,ox,oy+oh);
-    sg2.addColorStop(0,'#c8ccd4');sg2.addColorStop(0.5,'#9aa0ac');sg2.addColorStop(1,'#787e8a');
+    sg2.addColorStop(0,'#79b6d4');sg2.addColorStop(0.5,'#4f93b6');sg2.addColorStop(1,'#3a7898');
     G.fillStyle=sg2;
     G.beginPath();G.roundRect(ox,oy,ow,oh,S*0.5);G.fill();
-    G.strokeStyle='#5a606c';G.lineWidth=S*0.35;
+    G.strokeStyle='#2a5a74';G.lineWidth=S*0.35;
     G.beginPath();G.roundRect(ox,oy,ow,oh,S*0.5);G.stroke();
     // Üst yüzey (koyu)
     G.fillStyle='#2a2c32';
@@ -1092,7 +1104,7 @@ function draw(){
     const chefBusy=workers.filter(w=>w.role==='chef'&&w.status==='busy').length;
     positions.forEach(([bx,by],bi)=>{
       // Göz halkası
-      G.strokeStyle='#4a4e58';G.lineWidth=S*0.3;
+      G.strokeStyle='#1c1e24';G.lineWidth=S*0.3;
       G.beginPath();G.arc(bx,by,burnerR,0,Math.PI*2);G.stroke();
       // Bu ocakta pişiyor mu? (şef sayısına göre)
       if(st<chefBusy && bi<2){
@@ -1114,14 +1126,14 @@ function draw(){
       }
     });
     // Fırın kapağı
-    G.fillStyle='#34363e';
+    G.fillStyle='#35708e';
     G.beginPath();G.roundRect(ox+S*0.8,oy+oh*0.58,ow-S*1.6,oh*0.32,S*0.3);G.fill();
-    G.strokeStyle='#52545c';G.lineWidth=S*0.25;G.stroke();
+    G.strokeStyle='#28546c';G.lineWidth=S*0.25;G.stroke();
     // Kapak camı
-    G.fillStyle='rgba(120,140,180,0.3)';
+    G.fillStyle='rgba(230,245,255,0.4)';
     G.beginPath();G.roundRect(ox+S*1.2,oy+oh*0.63,ow-S*2.4,oh*0.18,S*0.2);G.fill();
     // Kapak kolu
-    G.fillStyle='#c8ccd4';
+    G.fillStyle='#dceaf2';
     G.fillRect(ox+S*1.5,oy+oh*0.56,ow-S*3,S*0.35);
   }
 
@@ -1240,21 +1252,21 @@ function draw(){
 
   // ── ZEMİN: sıcak parke + ışık havuzları ──
   {
-    // RC tarzı damalı fayans (krem + şeftali)
+    // RC tarzı BAKLAVA desenli zemin (krem + tarçın)
     G.save();G.beginPath();G.rect(RX,FY,RW,FH);G.clip();
-    const tile=S*5.2;
-    for(let ty3=0;ty3*tile<FH+tile;ty3++){
-      for(let tx3=0;tx3*tile<RW+tile;tx3++){
-        const even=(tx3+ty3)%2===0;
-        G.fillStyle=even?'#eed9a9':'#ddbb85';
-        G.fillRect(RX+tx3*tile,FY+ty3*tile,tile,tile);
-        G.fillStyle=even?'rgba(255,255,255,0.12)':'rgba(0,0,0,0.05)';
-        G.fillRect(RX+tx3*tile,FY+ty3*tile,tile,S*0.4);
+    G.fillStyle='#e4cd9d';G.fillRect(RX,FY,RW,FH);
+    const fd=S*3.7;
+    for(let iy=-1;iy*fd<FH+fd*2;iy++){
+      const cy0=FY+iy*fd, xoff=(iy%2===0)?0:fd;
+      for(let ix=-1;ix*fd*2<RW+fd*2;ix++){
+        const cx0=RX+ix*fd*2+xoff;
+        G.fillStyle=((ix+iy)%2===0)?'#efdaab':'#d9b984';
+        G.beginPath();
+        G.moveTo(cx0,cy0-fd);G.lineTo(cx0+fd,cy0);G.lineTo(cx0,cy0+fd);G.lineTo(cx0-fd,cy0);
+        G.closePath();G.fill();
+        G.strokeStyle='rgba(120,85,45,0.18)';G.lineWidth=1;G.stroke();
       }
     }
-    G.strokeStyle='rgba(120,85,45,0.16)';G.lineWidth=1;
-    for(let gx2=RX;gx2<=RX+RW;gx2+=tile){G.beginPath();G.moveTo(gx2,FY);G.lineTo(gx2,FY+FH);G.stroke();}
-    for(let gy2=FY;gy2<=FY+FH;gy2+=tile){G.beginPath();G.moveTo(RX,gy2);G.lineTo(RX+RW,gy2);G.stroke();}
     G.restore();
 
     // ── TAVAN LAMBALARINDAN IŞIK HAVUZLARI ──
@@ -1498,10 +1510,12 @@ function drawTable(t,i){
     G.beginPath();G.roundRect(cx0,cy0,scW,scH,S*0.5);G.stroke();
     // Sırtlık (dış kenar)
     G.fillStyle='#8a5e28';
-    const bx0 = side==='left'? cx0-S*0.15 : cx0+scW-S*0.55;
-    G.beginPath();G.roundRect(bx0,cy0-S*0.25,S*0.7,scH+S*0.5,S*0.3);G.fill();
+    const bx0 = side==='left'? cx0-S*0.2 : cx0+scW-S*0.65;
+    G.beginPath();G.roundRect(bx0,cy0-S*2.3,S*0.85,scH+S*2.55,S*0.35);G.fill();
     G.strokeStyle='#5e3c14';G.lineWidth=S*0.18;
-    G.beginPath();G.roundRect(bx0,cy0-S*0.25,S*0.7,scH+S*0.5,S*0.3);G.stroke();
+    G.beginPath();G.roundRect(bx0,cy0-S*2.3,S*0.85,scH+S*2.55,S*0.35);G.stroke();
+    G.fillStyle='rgba(255,255,255,0.12)';
+    G.beginPath();G.roundRect(bx0+S*0.15,cy0-S*2.1,S*0.35,scH+S*2.1,S*0.2);G.fill();
     G.fillStyle='rgba(255,255,255,0.14)';
     G.beginPath();G.roundRect(cx0+S*0.35,cy0+S*0.3,scW-S*0.7,scH*0.32,S*0.3);G.fill();
   }
@@ -1653,59 +1667,59 @@ function drawTable(t,i){
 /* ══ RC TARZI CHİBİ İNSAN ÇİZİMİ ══ */
 function drawPerson(px, py, o){
   const S=o.S, bob=o.bob||0;
-  const bw=S*3.2, bh=S*3.4, hr=S*1.5;
-  // Ayak gölgesi (bob'dan etkilenmez)
+  const hr=S*2.15;              // RC: koca kafa!
+  const bw=S*3.1, bh=S*2.5;     // ufak gövde
+  // Ayak gölgesi
   G.fillStyle='rgba(0,0,0,0.25)';
-  G.beginPath();G.ellipse(px,py+S*0.25,S*1.9,S*0.58,0,0,Math.PI*2);G.fill();
+  G.beginPath();G.ellipse(px,py+S*0.25,S*1.9,S*0.55,0,0,Math.PI*2);G.fill();
   const fy=py+bob;
   // Ayaklar
   G.fillStyle='#3a2a1a';
-  G.beginPath();G.ellipse(px-S*0.85,fy-S*0.15,S*0.68,S*0.4,0,0,Math.PI*2);G.fill();
-  G.beginPath();G.ellipse(px+S*0.85,fy-S*0.15,S*0.68,S*0.4,0,0,Math.PI*2);G.fill();
+  G.beginPath();G.ellipse(px-S*0.8,fy-S*0.12,S*0.62,S*0.36,0,0,Math.PI*2);G.fill();
+  G.beginPath();G.ellipse(px+S*0.8,fy-S*0.12,S*0.62,S*0.36,0,0,Math.PI*2);G.fill();
   // Gövde
-  const by=fy-S*0.4-bh;
+  const by=fy-S*0.35-bh;
   const bg=G.createLinearGradient(px-bw/2,by,px+bw/2,by);
   bg.addColorStop(0,o.body);bg.addColorStop(1,o.body2||o.body);
   G.fillStyle=bg;
-  G.beginPath();G.roundRect(px-bw/2,by,bw,bh+S*0.4,S*1.25);G.fill();
-  G.strokeStyle='rgba(30,20,10,0.42)';G.lineWidth=S*0.26;
-  G.beginPath();G.roundRect(px-bw/2,by,bw,bh+S*0.4,S*1.25);G.stroke();
-  // Gövde parlaklık
+  G.beginPath();G.roundRect(px-bw/2,by,bw,bh+S*0.35,S*1.1);G.fill();
+  G.strokeStyle='rgba(30,20,10,0.42)';G.lineWidth=S*0.24;
+  G.beginPath();G.roundRect(px-bw/2,by,bw,bh+S*0.35,S*1.1);G.stroke();
   G.fillStyle='rgba(255,255,255,0.18)';
-  G.beginPath();G.roundRect(px-bw/2+S*0.35,by+S*0.3,bw*0.4,bh*0.5,S*0.6);G.fill();
-  // Kafa
-  const hy=by-hr*0.62;
+  G.beginPath();G.roundRect(px-bw/2+S*0.3,by+S*0.25,bw*0.38,bh*0.5,S*0.5);G.fill();
+  // KAFA (büyük, RC oranı)
+  const hy=by-hr*0.82;
   G.fillStyle=o.skin||'#ffd9b0';
   G.beginPath();G.arc(px,hy,hr,0,Math.PI*2);G.fill();
   G.strokeStyle='rgba(120,80,50,0.5)';G.lineWidth=S*0.22;
   G.beginPath();G.arc(px,hy,hr,0,Math.PI*2);G.stroke();
-  // Saç (üst yarım)
+  // Saç (dolgun)
   if(o.hair){
     G.fillStyle=o.hair;
-    G.beginPath();G.arc(px,hy,hr,Math.PI,Math.PI*2);G.fill();
+    G.beginPath();G.arc(px,hy,hr,Math.PI*0.92,Math.PI*2.08);G.fill();
+    G.beginPath();G.ellipse(px,hy-hr*0.58,hr*0.9,hr*0.5,0,0,Math.PI*2);G.fill();
   }
   // Yüz (bakış yönü)
-  const fo = o.face==='left'?-S*0.42:o.face==='right'?S*0.42:0;
+  const fo = o.face==='left'?-S*0.55:o.face==='right'?S*0.55:0;
   G.fillStyle='#2a2020';
-  G.beginPath();G.arc(px-S*0.5+fo,hy+S*0.05,S*0.21,0,Math.PI*2);G.fill();
-  G.beginPath();G.arc(px+S*0.5+fo,hy+S*0.05,S*0.21,0,Math.PI*2);G.fill();
-  G.strokeStyle='#2a2020';G.lineWidth=S*0.17;
-  G.beginPath();G.arc(px+fo,hy+S*0.5,S*0.48,0.15*Math.PI,0.85*Math.PI);G.stroke();
-  // Yanak allığı
-  G.fillStyle='rgba(240,120,110,0.35)';
-  G.beginPath();G.arc(px-S*0.95+fo,hy+S*0.5,S*0.26,0,Math.PI*2);G.fill();
-  G.beginPath();G.arc(px+S*0.95+fo,hy+S*0.5,S*0.26,0,Math.PI*2);G.fill();
+  G.beginPath();G.arc(px-S*0.72+fo,hy+S*0.18,S*0.3,0,Math.PI*2);G.fill();
+  G.beginPath();G.arc(px+S*0.72+fo,hy+S*0.18,S*0.3,0,Math.PI*2);G.fill();
+  G.strokeStyle='#2a2020';G.lineWidth=S*0.2;
+  G.beginPath();G.arc(px+fo,hy+S*0.78,S*0.6,0.15*Math.PI,0.85*Math.PI);G.stroke();
+  G.fillStyle='rgba(240,120,110,0.4)';
+  G.beginPath();G.arc(px-S*1.32+fo,hy+S*0.78,S*0.32,0,Math.PI*2);G.fill();
+  G.beginPath();G.arc(px+S*1.32+fo,hy+S*0.78,S*0.32,0,Math.PI*2);G.fill();
   // Şef şapkası
   if(o.hat==='chef'){
     G.fillStyle='#f8f8f2';
-    G.beginPath();G.roundRect(px-hr*0.88,hy-hr-S*0.95,hr*1.76,S*1.15,S*0.28);G.fill();
-    G.beginPath();G.arc(px-hr*0.5,hy-hr-S*0.95,S*0.58,0,Math.PI*2);G.fill();
-    G.beginPath();G.arc(px,hy-hr-S*1.2,S*0.7,0,Math.PI*2);G.fill();
-    G.beginPath();G.arc(px+hr*0.5,hy-hr-S*0.95,S*0.58,0,Math.PI*2);G.fill();
+    G.beginPath();G.roundRect(px-hr*0.82,hy-hr-S*1.0,hr*1.64,S*1.25,S*0.3);G.fill();
+    G.beginPath();G.arc(px-hr*0.45,hy-hr-S*1.0,S*0.7,0,Math.PI*2);G.fill();
+    G.beginPath();G.arc(px,hy-hr-S*1.3,S*0.85,0,Math.PI*2);G.fill();
+    G.beginPath();G.arc(px+hr*0.45,hy-hr-S*1.0,S*0.7,0,Math.PI*2);G.fill();
     G.strokeStyle='rgba(150,150,150,0.45)';G.lineWidth=S*0.16;
-    G.beginPath();G.roundRect(px-hr*0.88,hy-hr-S*0.95,hr*1.76,S*1.15,S*0.28);G.stroke();
+    G.beginPath();G.roundRect(px-hr*0.82,hy-hr-S*1.0,hr*1.64,S*1.25,S*0.3);G.stroke();
   }
-  return hy-hr-(o.hat==='chef'?S*1.9:S*0.2); // tepe noktası (etiket için)
+  return hy-hr-(o.hat==='chef'?S*2.2:S*0.15);
 }
 
 function drawWorkers(){
@@ -1775,6 +1789,17 @@ function drawWorkers(){
       G.fillStyle='rgba(60,230,100,'+pulse+')';
       G.beginPath();G.arc(px+S*2.1,topY+S*1.4,S*0.8,0,Math.PI*2);G.fill();
       G.strokeStyle='#fff';G.lineWidth=S*0.24;G.stroke();
+    }
+
+    // Garson meşgulken tabak taşır (RC!)
+    if(w.role==='waiter'&&w.status==='busy'){
+      const plx=px+S*2.6, ply=py+bob-S*2.7;
+      G.fillStyle='#f4f4ee';
+      G.beginPath();G.ellipse(plx,ply,S*1.25,S*0.55,0,0,Math.PI*2);G.fill();
+      G.strokeStyle='#b8b8b0';G.lineWidth=S*0.15;
+      G.beginPath();G.ellipse(plx,ply,S*1.25,S*0.55,0,0,Math.PI*2);G.stroke();
+      G.fillStyle='#d88030';
+      G.beginPath();G.arc(plx,ply-S*0.28,S*0.46,0,Math.PI*2);G.fill();
     }
 
     // İsim etiketi
