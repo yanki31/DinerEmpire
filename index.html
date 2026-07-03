@@ -1342,16 +1342,42 @@ function draw(){
     G.globalAlpha=1;
   }
 
-  // Door
+  // Door — RC tarzı çift kanatlı, yuvarlak pencereli
   {
-    const dx=RX+RW/2-S*4,dy=FY+FH-S*11;
-    G.fillStyle='#a06020';G.beginPath();G.roundRect(dx,dy,S*8,S*11,S*.3);G.fill();
-    G.strokeStyle='#503010';G.lineWidth=S*.35;G.stroke();
-    G.strokeStyle='rgba(0,0,0,.18)';G.lineWidth=S*.25;
-    G.beginPath();G.moveTo(dx+S*4,dy);G.lineTo(dx+S*4,dy+S*11);G.stroke();
-    G.fillStyle='#e8c020';
-    G.beginPath();G.arc(dx+S*2.5,dy+S*5.5,S*.6,0,Math.PI*2);G.fill();
-    G.beginPath();G.arc(dx+S*5.5,dy+S*5.5,S*.6,0,Math.PI*2);G.fill();
+    const dw=S*9, dh=S*11;
+    const dx=RX+RW/2-dw/2, dy=FY+FH-dh;
+    // Çerçeve
+    G.fillStyle='#5a3a16';
+    G.beginPath();G.roundRect(dx-S*0.6,dy-S*0.9,dw+S*1.2,dh+S*0.9,S*0.5);G.fill();
+    // Kanatlar
+    for(let k=0;k<2;k++){
+      const kx=dx+k*dw/2;
+      const kg=G.createLinearGradient(kx,dy,kx+dw/2,dy);
+      kg.addColorStop(0,'#b06c24');kg.addColorStop(1,'#8e5518');
+      G.fillStyle=kg;
+      G.beginPath();G.roundRect(kx+S*0.15,dy,dw/2-S*0.3,dh,S*0.35);G.fill();
+      G.strokeStyle='#4e3010';G.lineWidth=S*0.3;
+      G.beginPath();G.roundRect(kx+S*0.15,dy,dw/2-S*0.3,dh,S*0.35);G.stroke();
+      // Yuvarlak cam
+      const wx=kx+dw/4, wy=dy+S*3;
+      G.fillStyle='#bfe0ea';
+      G.beginPath();G.arc(wx,wy,S*1.35,0,Math.PI*2);G.fill();
+      G.strokeStyle='#4e3010';G.lineWidth=S*0.35;
+      G.beginPath();G.arc(wx,wy,S*1.35,0,Math.PI*2);G.stroke();
+      G.fillStyle='rgba(255,255,255,0.55)';
+      G.beginPath();G.ellipse(wx-S*0.4,wy-S*0.4,S*0.5,S*0.3,-0.6,0,Math.PI*2);G.fill();
+      // Tekmelik
+      G.fillStyle='#6e4414';
+      G.fillRect(kx+S*0.6,dy+dh-S*2.2,dw/2-S*1.2,S*1.5);
+      // Kol
+      G.fillStyle='#e8c020';
+      G.beginPath();G.arc(kx+(k===0?dw/2-S*1.1:S*1.1),dy+dh*0.52,S*0.5,0,Math.PI*2);G.fill();
+    }
+    // Karşılama paspası
+    G.fillStyle='#a83848';
+    G.beginPath();G.roundRect(dx+S*0.8,dy+dh-S*0.2,dw-S*1.6,S*1.5,S*0.4);G.fill();
+    G.strokeStyle='rgba(255,255,255,0.45)';G.lineWidth=S*0.18;
+    G.beginPath();G.roundRect(dx+S*0.8,dy+dh-S*0.2,dw-S*1.6,S*1.5,S*0.4);G.stroke();
   }
   // ── BAR TEZGAHI (vektörel) ──
   {
@@ -1459,33 +1485,28 @@ function drawTable(t,i){
   G.ellipse(cx, y+h+S*0.5, w*0.52, S*1.6, 0, 0, Math.PI*2);
   G.fill();
 
-  // ── SANDALYELER (4 adet, top-down, ahşap) ──
-  const chairW=w*0.26, chairH=S*2.6;
-  function drawChair(chx, chy, facing){
-    // Gölge
-    G.fillStyle='rgba(0,0,0,0.12)';
-    G.beginPath();G.ellipse(chx+chairW/2, chy+chairH-S*0.2, chairW*0.5, S*0.7, 0,0,Math.PI*2);G.fill();
-    // Oturma yeri (ahşap)
-    const cg=G.createLinearGradient(chx,chy,chx,chy+chairH);
-    cg.addColorStop(0,'#A8773A');cg.addColorStop(1,'#8B5E28');
+  // ── SANDALYELER (yan, RC tarzı — sol & sağ) ──
+  const scW=S*2.7, scH=h*0.92;
+  function sideChair(cx0,cy0,side){
+    G.fillStyle='rgba(0,0,0,0.15)';
+    G.beginPath();G.ellipse(cx0+scW/2,cy0+scH,scW*0.55,S*0.55,0,0,Math.PI*2);G.fill();
+    const cg=G.createLinearGradient(cx0,cy0,cx0,cy0+scH);
+    cg.addColorStop(0,'#a8773a');cg.addColorStop(1,'#7e5424');
     G.fillStyle=cg;
-    G.beginPath();G.roundRect(chx,chy,chairW,chairH,S*0.5);G.fill();
-    G.strokeStyle='#6B4518';G.lineWidth=S*0.3;
-    G.beginPath();G.roundRect(chx,chy,chairW,chairH,S*0.5);G.stroke();
-    // Sırtlık göstergesi (yöne göre ince çizgi)
-    G.fillStyle='#7A5020';
-    if(facing==='up')    G.fillRect(chx+S*0.3, chy, chairW-S*0.6, S*0.6);
-    if(facing==='down')  G.fillRect(chx+S*0.3, chy+chairH-S*0.6, chairW-S*0.6, S*0.6);
-    // Highlight
-    G.fillStyle='rgba(255,255,255,0.15)';
-    G.beginPath();G.roundRect(chx+S*0.3,chy+S*0.3,chairW-S*0.6,chairH*0.4,S*0.3);G.fill();
+    G.beginPath();G.roundRect(cx0,cy0,scW,scH,S*0.5);G.fill();
+    G.strokeStyle='#5e3c14';G.lineWidth=S*0.26;
+    G.beginPath();G.roundRect(cx0,cy0,scW,scH,S*0.5);G.stroke();
+    // Sırtlık (dış kenar)
+    G.fillStyle='#8a5e28';
+    const bx0 = side==='left'? cx0-S*0.15 : cx0+scW-S*0.55;
+    G.beginPath();G.roundRect(bx0,cy0-S*0.25,S*0.7,scH+S*0.5,S*0.3);G.fill();
+    G.strokeStyle='#5e3c14';G.lineWidth=S*0.18;
+    G.beginPath();G.roundRect(bx0,cy0-S*0.25,S*0.7,scH+S*0.5,S*0.3);G.stroke();
+    G.fillStyle='rgba(255,255,255,0.14)';
+    G.beginPath();G.roundRect(cx0+S*0.35,cy0+S*0.3,scW-S*0.7,scH*0.32,S*0.3);G.fill();
   }
-  // Üst 2 sandalye (sırtı yukarı bakar)
-  drawChair(x+w*0.10, y-chairH-S*0.3, 'up');
-  drawChair(x+w*0.64, y-chairH-S*0.3, 'up');
-  // Alt 2 sandalye (sırtı aşağı)
-  drawChair(x+w*0.10, y+h+S*0.3, 'down');
-  drawChair(x+w*0.64, y+h+S*0.3, 'down');
+  sideChair(x-S*3.2, y+h*0.04, 'left');
+  sideChair(x+w+S*0.5, y+h*0.04, 'right');
 
   // ── MASA GÖVDESİ (3D kalınlık) ──
   // Yan yüz (alt kısım, derinlik hissi)
@@ -1629,6 +1650,64 @@ function drawTable(t,i){
   }
 }
 
+/* ══ RC TARZI CHİBİ İNSAN ÇİZİMİ ══ */
+function drawPerson(px, py, o){
+  const S=o.S, bob=o.bob||0;
+  const bw=S*3.2, bh=S*3.4, hr=S*1.5;
+  // Ayak gölgesi (bob'dan etkilenmez)
+  G.fillStyle='rgba(0,0,0,0.25)';
+  G.beginPath();G.ellipse(px,py+S*0.25,S*1.9,S*0.58,0,0,Math.PI*2);G.fill();
+  const fy=py+bob;
+  // Ayaklar
+  G.fillStyle='#3a2a1a';
+  G.beginPath();G.ellipse(px-S*0.85,fy-S*0.15,S*0.68,S*0.4,0,0,Math.PI*2);G.fill();
+  G.beginPath();G.ellipse(px+S*0.85,fy-S*0.15,S*0.68,S*0.4,0,0,Math.PI*2);G.fill();
+  // Gövde
+  const by=fy-S*0.4-bh;
+  const bg=G.createLinearGradient(px-bw/2,by,px+bw/2,by);
+  bg.addColorStop(0,o.body);bg.addColorStop(1,o.body2||o.body);
+  G.fillStyle=bg;
+  G.beginPath();G.roundRect(px-bw/2,by,bw,bh+S*0.4,S*1.25);G.fill();
+  G.strokeStyle='rgba(30,20,10,0.42)';G.lineWidth=S*0.26;
+  G.beginPath();G.roundRect(px-bw/2,by,bw,bh+S*0.4,S*1.25);G.stroke();
+  // Gövde parlaklık
+  G.fillStyle='rgba(255,255,255,0.18)';
+  G.beginPath();G.roundRect(px-bw/2+S*0.35,by+S*0.3,bw*0.4,bh*0.5,S*0.6);G.fill();
+  // Kafa
+  const hy=by-hr*0.62;
+  G.fillStyle=o.skin||'#ffd9b0';
+  G.beginPath();G.arc(px,hy,hr,0,Math.PI*2);G.fill();
+  G.strokeStyle='rgba(120,80,50,0.5)';G.lineWidth=S*0.22;
+  G.beginPath();G.arc(px,hy,hr,0,Math.PI*2);G.stroke();
+  // Saç (üst yarım)
+  if(o.hair){
+    G.fillStyle=o.hair;
+    G.beginPath();G.arc(px,hy,hr,Math.PI,Math.PI*2);G.fill();
+  }
+  // Yüz (bakış yönü)
+  const fo = o.face==='left'?-S*0.42:o.face==='right'?S*0.42:0;
+  G.fillStyle='#2a2020';
+  G.beginPath();G.arc(px-S*0.5+fo,hy+S*0.05,S*0.21,0,Math.PI*2);G.fill();
+  G.beginPath();G.arc(px+S*0.5+fo,hy+S*0.05,S*0.21,0,Math.PI*2);G.fill();
+  G.strokeStyle='#2a2020';G.lineWidth=S*0.17;
+  G.beginPath();G.arc(px+fo,hy+S*0.5,S*0.48,0.15*Math.PI,0.85*Math.PI);G.stroke();
+  // Yanak allığı
+  G.fillStyle='rgba(240,120,110,0.35)';
+  G.beginPath();G.arc(px-S*0.95+fo,hy+S*0.5,S*0.26,0,Math.PI*2);G.fill();
+  G.beginPath();G.arc(px+S*0.95+fo,hy+S*0.5,S*0.26,0,Math.PI*2);G.fill();
+  // Şef şapkası
+  if(o.hat==='chef'){
+    G.fillStyle='#f8f8f2';
+    G.beginPath();G.roundRect(px-hr*0.88,hy-hr-S*0.95,hr*1.76,S*1.15,S*0.28);G.fill();
+    G.beginPath();G.arc(px-hr*0.5,hy-hr-S*0.95,S*0.58,0,Math.PI*2);G.fill();
+    G.beginPath();G.arc(px,hy-hr-S*1.2,S*0.7,0,Math.PI*2);G.fill();
+    G.beginPath();G.arc(px+hr*0.5,hy-hr-S*0.95,S*0.58,0,Math.PI*2);G.fill();
+    G.strokeStyle='rgba(150,150,150,0.45)';G.lineWidth=S*0.16;
+    G.beginPath();G.roundRect(px-hr*0.88,hy-hr-S*0.95,hr*1.76,S*1.15,S*0.28);G.stroke();
+  }
+  return hy-hr-(o.hat==='chef'?S*1.9:S*0.2); // tepe noktası (etiket için)
+}
+
 function drawWorkers(){
   G.globalAlpha=1; // ensure full opacity
   const {S,RX,FY,RW,FH}=getLay();
@@ -1668,66 +1747,43 @@ function drawWorkers(){
 
     const px=Math.round(c.x);
     const py=Math.round(c.y);
-    const bob=Math.sin(c.ph)*S*0.35;
-    const R=S*3.0; // token yarıçapı
+    const bob=Math.sin(c.ph)*S*0.3;
 
-    // Rol renkleri [açık, koyu]
-    const ROLE_COL={
-      chef:['#ffb860','#e07818'],
-      waiter:['#68e098','#209850'],
-      janitor:['#88a0f0','#4058c0'],
-      bartender:['#e888d8','#a83898'],
+    const OUTFIT={
+      chef:['#f8f8f2','#e2e2da','chef'],
+      waiter:['#4ec080','#2a8850',null],
+      janitor:['#6a88e0','#3c58b8',null],
+      bartender:['#d878c0','#a04890',null],
     };
-    const rc2=ROLE_COL[w.role]||['#c8c8c8','#888888'];
+    const of=OUTFIT[w.role]||['#c0c0c0','#909090',null];
 
     G.globalAlpha=1;
-    // Zemin gölgesi
-    G.fillStyle='rgba(0,0,0,0.28)';
-    G.beginPath();G.ellipse(px,py+S*0.4,R*0.85,R*0.32,0,0,Math.PI*2);G.fill();
-
-    const cy2=py-R+bob;
-    // Gövde dairesi (radial gradient, canlı renk)
-    const tg2=G.createRadialGradient(px-R*0.35,cy2-R*0.35,R*0.15,px,cy2,R);
-    tg2.addColorStop(0,rc2[0]);tg2.addColorStop(1,rc2[1]);
-    G.fillStyle=tg2;
-    G.beginPath();G.arc(px,cy2,R,0,Math.PI*2);G.fill();
-    // Koyu kontur
-    G.strokeStyle='rgba(40,20,10,0.5)';G.lineWidth=S*0.35;
-    G.beginPath();G.arc(px,cy2,R,0,Math.PI*2);G.stroke();
-    // Üst parlaklık
-    G.fillStyle='rgba(255,255,255,0.28)';
-    G.beginPath();G.ellipse(px-R*0.25,cy2-R*0.42,R*0.45,R*0.26,-0.5,0,Math.PI*2);G.fill();
-
-    // Emoji (büyük ve net)
-    G.imageSmoothingEnabled=true;
-    G.font=`${R*1.35}px serif`;
-    G.textAlign='center';G.textBaseline='middle';
-    G.fillText(w.e,px,cy2+R*0.06);
-    G.imageSmoothingEnabled=false;
+    const topY=drawPerson(px,py,{S,bob,body:of[0],body2:of[1],hat:of[2],
+      skin:'#ffd9b0',hair:of[2]?null:'#4a3018',face:'down'});
 
     // Owner tacı
     if(w.isOwner){
       G.imageSmoothingEnabled=true;
-      G.font=`${R*0.75}px serif`;G.textAlign='center';G.textBaseline='middle';
-      G.fillText('👑',px,cy2-R-S*0.6);
+      G.font=`${S*1.6}px serif`;G.textAlign='center';G.textBaseline='middle';
+      G.fillText('👑',px,topY-S*0.7);
       G.imageSmoothingEnabled=false;
     }
 
-    // Busy dot (yeşil, yanıp söner)
+    // Busy nokta
     if(w.status==='busy'){
       const pulse=0.8+Math.sin(tick*0.25)*0.2;
       G.fillStyle='rgba(60,230,100,'+pulse+')';
-      G.beginPath();G.arc(px+R*0.78,cy2-R*0.78,S*0.85,0,Math.PI*2);G.fill();
-      G.strokeStyle='#fff';G.lineWidth=S*0.25;G.stroke();
+      G.beginPath();G.arc(px+S*2.1,topY+S*1.4,S*0.8,0,Math.PI*2);G.fill();
+      G.strokeStyle='#fff';G.lineWidth=S*0.24;G.stroke();
     }
 
-    // Name tag (parlak, rol rengiyle çerçeveli)
+    // İsim etiketi
     const ntW=S*8;
-    const ntY=cy2-R-(w.isOwner?S*2.5:S*0.8)-S*2.1;
+    const ntY=topY-(w.isOwner?S*2.1:S*0.4)-S*2.1;
     G.fillStyle='rgba(10,10,20,0.85)';
     G.beginPath();G.roundRect(px-ntW/2,ntY,ntW,S*2,S*0.5);G.fill();
-    G.strokeStyle=w.status==='busy'?'#40e060':rc2[0];
-    G.lineWidth=S*0.25;
+    G.strokeStyle=w.status==='busy'?'#40e060':of[0];
+    G.lineWidth=S*0.24;
     G.beginPath();G.roundRect(px-ntW/2,ntY,ntW,S*2,S*0.5);G.stroke();
     G.fillStyle='#ffe8a0';
     G.font=`bold ${S*1.05}px 'Press Start 2P',monospace`;
@@ -1753,33 +1809,17 @@ function drawWalkers(){
     }
     // seated ise hareketsiz masada bekler (alpha sabit kalır)
     const px=Math.round(w.x),py=Math.round(w.y);
-    const R=S*2.5; // müşteri tokeni (çalışandan biraz küçük)
-    const walkBob=w.seated?0:Math.sin(tick*0.25+px)*S*0.3;
+    const walkBob=w.seated?0:Math.sin(tick*0.28+px*0.1)*S*0.32;
     G.globalAlpha=w.alpha;
 
-    // Zemin gölgesi
-    G.fillStyle='rgba(0,0,0,0.25)';
-    G.beginPath();G.ellipse(px,py+S*0.35,R*0.85,R*0.3,0,0,Math.PI*2);G.fill();
+    const CB=['#e06868','#5f9be0','#e8a848','#9a6fd0','#50b8a8','#d878b0','#8fb84a'];
+    const CH=['#3a2a1a','#6a4a20','#141414','#8a3018','#c8a040','#5a5a5a'];
+    const hc=(w.emoji&&w.emoji.codePointAt(0))||65;
 
-    const cy3=py-R+walkBob;
-    // Krem gövde dairesi
-    const wg3=G.createRadialGradient(px-R*0.3,cy3-R*0.3,R*0.15,px,cy3,R);
-    wg3.addColorStop(0,'#fff4e0');wg3.addColorStop(1,'#e0c8a0');
-    G.fillStyle=wg3;
-    G.beginPath();G.arc(px,cy3,R,0,Math.PI*2);G.fill();
-    G.strokeStyle='rgba(90,60,30,0.45)';G.lineWidth=S*0.3;
-    G.beginPath();G.arc(px,cy3,R,0,Math.PI*2);G.stroke();
-    // Parlaklık
-    G.fillStyle='rgba(255,255,255,0.35)';
-    G.beginPath();G.ellipse(px-R*0.25,cy3-R*0.4,R*0.4,R*0.24,-0.5,0,Math.PI*2);G.fill();
-
-    // Müşteri emojisi
-    G.imageSmoothingEnabled=true;
-    G.font=`${R*1.35}px serif`;
-    G.textAlign='center';G.textBaseline='middle';
-    G.fillText(w.emoji,px,cy3+R*0.06);
-    G.imageSmoothingEnabled=false;
-
+    drawPerson(px,py,{S,bob:walkBob,
+      body:CB[hc%7],body2:CB[(hc+3)%7],
+      skin:'#ffd9b0',hair:CH[hc%6],
+      face:w.seated?(w.sitFace||'right'):'down'});
     G.globalAlpha=1;
   });
   G.globalAlpha=1;
@@ -1966,8 +2006,10 @@ function seatFromQueue(){
   if(q.walker){
     q.walker.inQueue=false;q.walker.seated=false;q.walker.exiting=false;
     q.walker.tableIdx=i;
-    q.walker.tx=tables[i].x+tables[i].w/2;
-    q.walker.ty=tables[i].y+tables[i].h*.55;
+    const {S:S9}=getLay();
+    q.walker.tx=tables[i].x-S9*1.9;
+    q.walker.ty=tables[i].y+tables[i].h*1.05;
+    q.walker.sitFace='right';
   }
   updateQueuePositions();
   notify('🚶 Sıradaki müşteri masaya oturdu!');
@@ -1996,7 +2038,7 @@ function spawnCust(){
   const cust=emojis[Math.floor(Math.random()*emojis.length)];
   tables[i].state='wait';tables[i].cust=cust;tables[i].waitStart=Date.now();
   const {RX,FY,RW,FH,S}=getLay();
-  walkers.push({emoji:cust,tableIdx:i,x:RX+RW/2,y:FY+FH-S*3,tx:tables[i].x+tables[i].w/2,ty:tables[i].y+tables[i].h*.55,frame:0,alpha:1,seated:false,exiting:false});
+  walkers.push({emoji:cust,tableIdx:i,x:RX+RW/2,y:FY+FH-S*3,tx:tables[i].x-S*1.9,ty:tables[i].y+tables[i].h*1.05,sitFace:'right',frame:0,alpha:1,seated:false,exiting:false});
   if(leaves[i])clearTimeout(leaves[i]);
   leaves[i]=setTimeout(()=>{
     if(tables[i]&&tables[i].state==='wait'){
