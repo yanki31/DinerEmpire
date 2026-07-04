@@ -1480,9 +1480,9 @@ function drawTable(t,i){
   if(!t.w)return;
   const {S}=getLay();
   const {x,y,w,h,state,meal,cust}=t;
-  const cx=x+w/2, cy=y+h/2;
+  const sh=S*2.6;                 // çapraz shear (RC diyagonal his)
+  const cx=x+w/2+sh/2, cy=y+h/2;  // görsel merkez
 
-  // State renkleri
   const TC={
     empty:{top:'#E8C88A',top2:'#D4A860',side:'#9A7028',edge:'#7A5418',glow:null},
     wait: {top:'#F8E058',top2:'#E8C828',side:'#B89810',edge:'#988008',glow:'#F0C800'},
@@ -1491,15 +1491,42 @@ function drawTable(t,i){
   };
   const c2=TC[state]||TC.empty;
 
+  // Paralelkenar köşeleri (üst kenar sağa kaymış)
+  const TLx=x+sh, TRx=x+w+sh, BLx=x, BRx=x+w;
+  const TY=y, BY=y+h, TH3=S*2.1; // ön yüz kalınlığı
+
   // ── ZEMİN GÖLGESİ ──
   G.fillStyle='rgba(0,0,0,0.22)';
-  G.beginPath();
-  G.ellipse(cx, y+h+S*0.5, w*0.52, S*1.6, 0, 0, Math.PI*2);
-  G.fill();
+  G.beginPath();G.ellipse(cx, BY+S*1.2, w*0.55, S*1.7, 0, 0, Math.PI*2);G.fill();
 
-  // ── SANDALYELER (yan, RC tarzı — sol & sağ) ──
-  const scW=S*2.7, scH=h*0.92;
-  function sideChair(cx0,cy0,side){
+  // ── SANDALYE ÇİZERLERİ ──
+  function backChair(bx){ // masa arkasında, küçük
+    G.fillStyle='#8a5e28';
+    G.beginPath();G.roundRect(bx,TY-S*2.4,S*2.4,S*2.6,S*0.4);G.fill();
+    G.strokeStyle='#5e3c14';G.lineWidth=S*0.22;
+    G.beginPath();G.roundRect(bx,TY-S*2.4,S*2.4,S*2.6,S*0.4);G.stroke();
+    G.fillStyle='rgba(255,255,255,0.12)';
+    G.fillRect(bx+S*0.25,TY-S*2.15,S*1.9,S*0.7);
+  }
+  function frontChair(bx){ // masa önünde, yüksek sırtlık bize dönük
+    G.fillStyle='rgba(0,0,0,0.15)';
+    G.beginPath();G.ellipse(bx+S*1.3,BY+S*3.1,S*1.5,S*0.5,0,0,Math.PI*2);G.fill();
+    const fg=G.createLinearGradient(bx,BY+S*0.2,bx,BY+S*3);
+    fg.addColorStop(0,'#a8773a');fg.addColorStop(1,'#7e5424');
+    G.fillStyle=fg;
+    G.beginPath();G.roundRect(bx,BY+S*0.2,S*2.6,S*2.9,S*0.45);G.fill();
+    G.strokeStyle='#5e3c14';G.lineWidth=S*0.24;
+    G.beginPath();G.roundRect(bx,BY+S*0.2,S*2.6,S*2.9,S*0.45);G.stroke();
+    // sırtlık çıtaları
+    G.strokeStyle='rgba(70,45,15,0.5)';G.lineWidth=S*0.2;
+    for(let li2=1;li2<3;li2++){
+      G.beginPath();G.moveTo(bx+S*2.6*li2/3,BY+S*0.5);G.lineTo(bx+S*2.6*li2/3,BY+S*2.8);G.stroke();
+    }
+    G.fillStyle='rgba(255,255,255,0.12)';
+    G.fillRect(bx+S*0.25,BY+S*0.45,S*2.1,S*0.6);
+  }
+  function leftChair(){ // müşterinin oturduğu (mevcut anchor korunur)
+    const cx0=x-S*3.2, cy0=y+h*0.04, scW=S*2.7, scH=h*0.92;
     G.fillStyle='rgba(0,0,0,0.15)';
     G.beginPath();G.ellipse(cx0+scW/2,cy0+scH,scW*0.55,S*0.55,0,0,Math.PI*2);G.fill();
     const cg=G.createLinearGradient(cx0,cy0,cx0,cy0+scH);
@@ -1508,83 +1535,100 @@ function drawTable(t,i){
     G.beginPath();G.roundRect(cx0,cy0,scW,scH,S*0.5);G.fill();
     G.strokeStyle='#5e3c14';G.lineWidth=S*0.26;
     G.beginPath();G.roundRect(cx0,cy0,scW,scH,S*0.5);G.stroke();
-    // Sırtlık (dış kenar)
     G.fillStyle='#8a5e28';
-    const bx0 = side==='left'? cx0-S*0.2 : cx0+scW-S*0.65;
-    G.beginPath();G.roundRect(bx0,cy0-S*2.3,S*0.85,scH+S*2.55,S*0.35);G.fill();
+    G.beginPath();G.roundRect(cx0-S*0.2,cy0-S*2.3,S*0.85,scH+S*2.55,S*0.35);G.fill();
     G.strokeStyle='#5e3c14';G.lineWidth=S*0.18;
-    G.beginPath();G.roundRect(bx0,cy0-S*2.3,S*0.85,scH+S*2.55,S*0.35);G.stroke();
-    G.fillStyle='rgba(255,255,255,0.12)';
-    G.beginPath();G.roundRect(bx0+S*0.15,cy0-S*2.1,S*0.35,scH+S*2.1,S*0.2);G.fill();
-    G.fillStyle='rgba(255,255,255,0.14)';
-    G.beginPath();G.roundRect(cx0+S*0.35,cy0+S*0.3,scW-S*0.7,scH*0.32,S*0.3);G.fill();
+    G.beginPath();G.roundRect(cx0-S*0.2,cy0-S*2.3,S*0.85,scH+S*2.55,S*0.35);G.stroke();
   }
-  sideChair(x-S*3.2, y+h*0.04, 'left');
-  sideChair(x+w+S*0.5, y+h*0.04, 'right');
 
-  // ── MASA GÖVDESİ (3D kalınlık) ──
-  // Yan yüz (alt kısım, derinlik hissi)
+  // Arka sandalyeler (masadan önce çizilir → arkasında kalır)
+  backChair(TLx+w*0.18);
+  backChair(TLx+w*0.58);
+  leftChair();
+
+  // ── MASA: ÖN YÜZ (alt kenar boyunca) ──
   G.fillStyle=c2.side;
-  G.beginPath();G.roundRect(x, y+h-S*1.2, w, S*2.2, S*0.8);G.fill();
+  G.beginPath();
+  G.moveTo(BLx,BY);G.lineTo(BRx,BY);
+  G.lineTo(BRx,BY+TH3);G.lineTo(BLx,BY+TH3);
+  G.closePath();G.fill();
+  G.strokeStyle=c2.edge;G.lineWidth=S*0.3;G.stroke();
+  // Sol yan kapak (küçük üçgen derinlik)
+  G.fillStyle=c2.edge;
+  G.beginPath();
+  G.moveTo(BLx,BY);G.lineTo(TLx,TY);
+  G.lineTo(TLx,TY+TH3*0.5);G.lineTo(BLx,BY+TH3);
+  G.closePath();G.fill();
 
-  // Üst yüzey (gradient)
-  const tg=G.createLinearGradient(x,y,x,y+h);
+  // ── MASA ÜSTÜ (paralelkenar, gradient) ──
+  const tg=G.createLinearGradient(0,TY,0,BY);
   tg.addColorStop(0,c2.top);tg.addColorStop(1,c2.top2);
   G.fillStyle=tg;
-  G.beginPath();G.roundRect(x, y, w, h, S*1.0);G.fill();
+  G.beginPath();
+  G.moveTo(TLx,TY);G.lineTo(TRx,TY);G.lineTo(BRx,BY);G.lineTo(BLx,BY);
+  G.closePath();G.fill();
 
-  // Glow (bekleme/hazır durumda)
   if(c2.glow){
     G.save();
     G.shadowColor=c2.glow;
     G.shadowBlur=S*(2.5+Math.sin(tick*0.12+i)*1.2);
-    G.strokeStyle=c2.edge;G.lineWidth=S*0.6;
-    G.beginPath();G.roundRect(x, y, w, h, S*1.0);G.stroke();
+    G.strokeStyle=c2.edge;G.lineWidth=S*0.55;
+    G.beginPath();
+    G.moveTo(TLx,TY);G.lineTo(TRx,TY);G.lineTo(BRx,BY);G.lineTo(BLx,BY);
+    G.closePath();G.stroke();
     G.restore();
   } else {
-    G.strokeStyle=c2.edge;G.lineWidth=S*0.5;
-    G.beginPath();G.roundRect(x, y, w, h, S*1.0);G.stroke();
+    G.strokeStyle=c2.edge;G.lineWidth=S*0.45;
+    G.beginPath();
+    G.moveTo(TLx,TY);G.lineTo(TRx,TY);G.lineTo(BRx,BY);G.lineTo(BLx,BY);
+    G.closePath();G.stroke();
   }
 
-  // Masa örtüsü (Restaurant City tarzı — bordo, dantel kenarlı)
+  // Üst parlaklık şeridi
+  G.fillStyle='rgba(255,255,255,0.20)';
+  G.beginPath();
+  G.moveTo(TLx+S*0.6,TY+S*0.4);G.lineTo(TRx-S*0.6,TY+S*0.4);
+  G.lineTo(TRx-S*0.6-sh*0.35,TY+h*0.34);G.lineTo(TLx+S*0.6-sh*0.35+sh*0.35,TY+h*0.34);
+  G.closePath();G.fill();
+
+  // ── MASA ÖRTÜSÜ (boş masada, paralelkenar) ──
   if(state==='empty'){
+    const inX=S*1.0, inY=S*0.8;
     G.fillStyle='#a83848';
-    G.beginPath();G.roundRect(x+S*0.8, y+S*0.7, w-S*1.6, h-S*1.4, S*0.5);G.fill();
-    G.fillStyle='rgba(255,255,255,0.08)';
-    G.beginPath();G.roundRect(x+S*0.8, y+S*0.7, w-S*1.6, (h-S*1.4)*0.4, S*0.5);G.fill();
+    G.beginPath();
+    G.moveTo(TLx+inX,TY+inY);G.lineTo(TRx-inX,TY+inY);
+    G.lineTo(BRx-inX,BY-inY);G.lineTo(BLx+inX,BY-inY);
+    G.closePath();G.fill();
     G.strokeStyle='rgba(255,255,255,0.65)';G.lineWidth=S*0.22;
     G.setLineDash([S*0.55,S*0.4]);
-    G.beginPath();G.roundRect(x+S*1.15, y+S*1.0, w-S*2.3, h-S*2.0, S*0.4);G.stroke();
+    G.beginPath();
+    G.moveTo(TLx+inX+S*0.35,TY+inY+S*0.3);G.lineTo(TRx-inX-S*0.35,TY+inY+S*0.3);
+    G.lineTo(BRx-inX-S*0.35,BY-inY-S*0.3);G.lineTo(BLx+inX+S*0.35,BY-inY-S*0.3);
+    G.closePath();G.stroke();
     G.setLineDash([]);
   }
 
-  // Üst highlight (parlaklık)
-  G.fillStyle='rgba(255,255,255,0.22)';
-  G.beginPath();G.roundRect(x+S*0.6, y+S*0.5, w-S*1.2, h*0.32, S*0.6);G.fill();
-
-  // ── MASA İÇERİĞİ ──
+  // ── İÇERİK ──
   G.imageSmoothingEnabled=true;
   G.textAlign='center';G.textBaseline='middle';
 
   if(state==='empty'){
-    // Boş tabak + çatal bıçak
-    G.fillStyle='rgba(255,255,255,0.65)';
-    G.beginPath();G.ellipse(cx, cy, S*1.8, S*1.4, 0, 0, Math.PI*2);G.fill();
-    G.strokeStyle='rgba(0,0,0,0.12)';G.lineWidth=S*0.3;G.stroke();
+    G.fillStyle='rgba(255,255,255,0.7)';
+    G.beginPath();G.ellipse(cx, cy, S*1.8, S*1.35, 0, 0, Math.PI*2);G.fill();
+    G.strokeStyle='rgba(0,0,0,0.12)';G.lineWidth=S*0.3;
+    G.beginPath();G.ellipse(cx, cy, S*1.8, S*1.35, 0, 0, Math.PI*2);G.stroke();
     G.fillStyle='rgba(180,180,180,0.5)';
     G.font=`${S*1.6}px serif`;
     G.fillText('🍽️', cx, cy);
   } else if(state==='wait'){
-    // Düşünme balonu
     G.font=`${S*3}px serif`;
     G.fillText('💭', cx, cy-S*0.5);
   } else if(state==='cook'&&meal>=0){
     G.font=`${S*3.2}px serif`;
     G.fillText(RCP[menu[meal]]?.e||'🍳', cx, cy-S*0.3);
-    // Pişirme progress bar
     const pct=Math.max(0,Math.min(1,(Date.now()-t.cs)/(t.ce-t.cs)));
     G.imageSmoothingEnabled=false;
-    const barW=w-S*2, barX=x+S, barY=y+h-S*2.3;
+    const barW=w-S*2, barX=x+S+sh*0.4, barY=BY-S*2.2;
     G.fillStyle='rgba(0,0,0,0.35)';
     G.beginPath();G.roundRect(barX,barY,barW,S*1.5,S*0.5);G.fill();
     const pbg=G.createLinearGradient(barX,0,barX+barW,0);
@@ -1593,38 +1637,39 @@ function drawTable(t,i){
     G.beginPath();G.roundRect(barX,barY,barW*pct,S*1.5,S*0.5);G.fill();
     G.imageSmoothingEnabled=true;
   } else if(state==='done'){
-    // Hazır yemek + buhar
     G.font=`${S*3.2}px serif`;
     G.fillText(meal>=0?RCP[menu[meal]]?.e||'✅':'✅', cx, cy-S*0.3);
-    // Buhar efekti
     G.fillStyle='rgba(255,255,255,'+(0.3+Math.sin(tick*0.2)*0.15)+')';
     G.font=`${S*1.4}px serif`;
     G.fillText('♨️', cx, cy-S*2.5);
   }
   G.imageSmoothingEnabled=false;
 
+  // Ön sandalyeler (masadan SONRA → RC'deki gibi önde dururlar)
+  frontChair(BLx+w*0.16);
+  frontChair(BLx+w*0.56);
+
   // ── DURUM ETİKETİ ──
   const lbls={wait:'TIKLA!',cook:'PİŞİYOR',done:'HAZIR!'};
   if(lbls[state]){
     const lblColor=state==='done'?'#40E060':state==='wait'?'#FFE040':'#FFFFFF';
-    // Etiket arka planı
     G.fillStyle='rgba(0,0,0,0.55)';
     const lblW=S*6.5;
-    G.beginPath();G.roundRect(cx-lblW/2, y+h-S*1.3, lblW, S*2, S*0.5);G.fill();
+    G.beginPath();G.roundRect(cx-lblW/2, BY-S*1.1, lblW, S*2, S*0.5);G.fill();
     G.fillStyle=lblColor;
     G.font=`bold ${S*1.0}px 'Press Start 2P',monospace`;
     G.textAlign='center';G.textBaseline='middle';
-    G.fillText(lbls[state], cx, y+h-S*0.3);
+    G.fillText(lbls[state], cx, BY-S*0.1);
   }
 
-  // ── SABIR GÖSTERGESİ (RC tarzı) ──
+  // ── SABIR GÖSTERGESİ ──
   if((state==='wait'&&t.waitStart)||(state==='done'&&t.doneStart)){
     const total = state==='wait'?11000:20000;
     const start = state==='wait'?t.waitStart:t.doneStart;
     const left = Math.max(0, 1-(Date.now()-start)/total);
     const pEmoji = left>0.55?'😊':left>0.25?'😐':'😡';
     const pCol = left>0.55?'#40d060':left>0.25?'#f0c030':'#e04040';
-    const pbx=x+S*0.3, pby=y-S*4.3, pbw=S*5.5, pbh=S*1.1;
+    const pbx=TLx+S*0.2, pby=TY-S*4.3, pbw=S*5.5, pbh=S*1.1;
     G.fillStyle='rgba(0,0,0,0.55)';
     G.beginPath();G.roundRect(pbx-S*0.3,pby-S*0.35,pbw+S*3.2,pbh+S*0.7,S*0.5);G.fill();
     G.fillStyle='rgba(255,255,255,0.15)';
@@ -1637,24 +1682,21 @@ function drawTable(t,i){
     G.imageSmoothingEnabled=false;
   }
 
-  // ── MÜŞTERİ KONUŞMA BALONU ──
+  // ── KONUŞMA BALONU ──
   if(cust&&state!=='empty'){
-    const bx2=x+w-S*4.5, by2=y-S*6;
-    // Balon gölgesi
+    const bx2=TRx-S*4.5, by2=TY-S*6;
     G.fillStyle='rgba(0,0,0,0.15)';
     G.beginPath();G.roundRect(bx2+S*0.3, by2+S*0.3, S*5, S*3.4, S*0.6);G.fill();
-    // Balon
     G.fillStyle='#fff';
     G.beginPath();G.roundRect(bx2, by2, S*5, S*3.4, S*0.6);G.fill();
-    G.strokeStyle=c2.edge;G.lineWidth=S*0.35;G.stroke();
-    // Kuyruk
+    G.strokeStyle=c2.edge;G.lineWidth=S*0.35;
+    G.beginPath();G.roundRect(bx2, by2, S*5, S*3.4, S*0.6);G.stroke();
     G.fillStyle='#fff';
     G.beginPath();
     G.moveTo(bx2+S*1.2, by2+S*3.4);
     G.lineTo(bx2+S*2.6, by2+S*3.4);
     G.lineTo(bx2+S*1.8, by2+S*4.6);
     G.closePath();G.fill();
-    // Balon içeriği: beklerken ❔, sipariş sonrası YEMEK (RC tarzı)
     const bubbleEmoji=(state==='cook'||state==='done')&&meal>=0?(RCP[menu[meal]]?.e||cust):'❔';
     G.imageSmoothingEnabled=true;
     G.font=`${S*2.4}px serif`;
@@ -2356,6 +2398,7 @@ function endDay(){
 }
 
 function showDayReport(r){
+  saveGame();
   checkUnlocks();
   cleanOldRatings();
   checkRushHour();
@@ -2654,6 +2697,78 @@ function bFin(){
 
 
 // ═══ BAŞLANGIÇ EKRANI ═══
+/* ══ KAYIT SİSTEMİ (localStorage — GitHub Pages'te çalışır) ══ */
+const SAVE_KEY='dinerempire_save_v1';
+
+function saveGame(){
+  if(!restType) return;
+  try{
+    const data={v:1,savedAt:Date.now(),
+      coins,dayNum,dayT,restType,tableCount,stoveCount,happy,decoB,
+      menu:[...menu],
+      rcp:RCP.map(r=>({lv:r.lv,xp:r.xp})),
+      workers:workers.map(w=>({name:w.name,e:w.e,role:w.role,sal:w.sal,sk:w.sk,days:w.days||0,earned:w.earned||0,isOwner:!!w.isOwner,ct:w.ct})),
+      wallD:wallD.map(d=>({e:d.e,n:d.n,b:d.b,c:d.c,gc:d.gc,gr:d.gr})),
+      extIds:extItems.map(x=>x.id),
+      warehouse:JSON.parse(JSON.stringify(warehouse)),
+      tablesG:tables.map(t=>({gc:t.gc,gr:t.gr})),
+      hasAccountant,taxAccum,fridgeCap,shelfCap,
+      ratingHistory:ratingHistory.slice(-200)};
+    try{data.gp=gp;}catch(e){}
+    try{data.extPop=extPop;data.extHap=extHap;}catch(e){}
+    try{data.quizDone=quizDone;}catch(e){}
+    localStorage.setItem(SAVE_KEY,JSON.stringify(data));
+  }catch(e){/* localStorage yoksa sessiz geç */}
+}
+
+function getSaveMeta(){
+  try{
+    const d=JSON.parse(localStorage.getItem(SAVE_KEY));
+    return d&&d.restType?{day:d.dayNum,coins:d.coins,type:d.restType}:null;
+  }catch(e){return null;}
+}
+
+function deleteSave(){
+  try{localStorage.removeItem(SAVE_KEY);}catch(e){}
+  initStartScreen();
+}
+
+function loadGame(){
+  let d=null;
+  try{d=JSON.parse(localStorage.getItem(SAVE_KEY));}catch(e){}
+  if(!d||!d.restType){notify('Kayıt bulunamadı');return;}
+  try{
+    restType=d.restType; coins=d.coins; dayNum=d.dayNum; dayT=d.dayT||0;
+    tableCount=d.tableCount||2; stoveCount=d.stoveCount||1;
+    happy=(d.happy!==undefined)?d.happy:100; decoB=d.decoB||0;
+    try{if(d.gp!==undefined)gp=d.gp;}catch(e){}
+    try{if(d.extPop!==undefined){extPop=d.extPop;extHap=d.extHap;}}catch(e){}
+    try{if(d.quizDone!==undefined)quizDone=!!d.quizDone;}catch(e){}
+    menu.length=0;(d.menu&&d.menu.length?d.menu:[0]).forEach(m=>menu.push(m));
+    (d.rcp||[]).forEach((r,i2)=>{if(RCP[i2]){RCP[i2].lv=r.lv;RCP[i2].xp=r.xp;}});
+    workers.length=0;(d.workers||[]).forEach(w=>workers.push({...w,status:'idle'}));
+    wallD.length=0;(d.wallD||[]).forEach(x=>wallD.push(x));
+    extItems.length=0;(d.extIds||[]).forEach(id=>{const it=EXT.find(e2=>e2.id===id);if(it)extItems.push(it);});
+    Object.keys(warehouse).forEach(k=>warehouse[k]=[]);
+    Object.entries(d.warehouse||{}).forEach(([k,v])=>{if(warehouse[k]!==undefined)warehouse[k]=v;});
+    recalcAllIng();
+    (d.tablesG||[]).forEach((tg2,i2)=>{
+      if(tables[i2]){tables[i2].gc=tg2.gc;tables[i2].gr=tg2.gr;
+        tables[i2].state='empty';tables[i2].meal=-1;tables[i2].cust='';}
+    });
+    hasAccountant=!!d.hasAccountant; taxAccum=d.taxAccum||0;
+    fridgeCap=d.fridgeCap||50; shelfCap=d.shelfCap||100;
+    ratingHistory.length=0;(d.ratingHistory||[]).forEach(r=>ratingHistory.push(r));
+    doorQueue.length=0;
+    document.getElementById('start-screen').style.display='none';
+    buildWB(); hudU(); restartCustSpawn();
+    notify('💾 Kayıt yüklendi — Gün '+dayNum+', tekrar hoş geldin!');
+  }catch(e){notify('Kayıt yüklenemedi');console.error(e);}
+}
+
+// Otomatik kayıt: her 30 saniyede
+setInterval(saveGame, 30000);
+
 function initStartScreen() {
   const container = document.getElementById('type-cards');
   if (!container) return;
@@ -2681,6 +2796,21 @@ function initStartScreen() {
     card.onclick = () => selectRestType(key);
     container.appendChild(card);
   });
+  // Kayıtlı oyun varsa DEVAM ET kartı
+  const meta = getSaveMeta();
+  if(meta){
+    const tInfo = REST_TYPES[meta.type]||{icon:'🍽️',name:''};
+    const cc = document.createElement('div');
+    cc.style.cssText = 'background:#152415;border:2px solid #4cb84c;border-radius:8px;padding:16px;width:160px;cursor:pointer;text-align:center;transition:all .2s;';
+    cc.innerHTML = '<div style="font-size:32px;margin-bottom:8px">💾</div>'
+      + '<div style="font-size:9px;font-weight:bold;color:#6ee06e;font-family:\'Press Start 2P\',monospace">DEVAM ET</div>'
+      + '<div style="font-size:7px;color:#9c9;margin-top:6px">'+tInfo.icon+' Gün '+meta.day+' • '+meta.coins+'G</div>'
+      + '<div id="del-save" style="font-size:6px;color:#688;margin-top:8px;text-decoration:underline">kaydı sil</div>';
+    cc.onclick = loadGame;
+    cc.querySelector('#del-save').onclick = function(ev){ ev.stopPropagation(); deleteSave(); };
+    container.prepend(cc);
+  }
+
 }
 
 function selectRestType(key) {
