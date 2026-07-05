@@ -941,7 +941,7 @@ function layoutTables(){
     // Çakışma kontrolü (önceki indexlerle)
     const clash=tables.some((o,j)=>j<i&&j<tableCount&&o.gc===t.gc&&o.gr===t.gr);
     if(clash){const cell=findFreeCell(i);t.gc=cell.c;t.gr=cell.r;}
-    const TW=cw*0.78, TH=Math.min(ch*0.48, TW*0.6);
+    const TW=cw*0.82, TH=Math.min(ch*0.55, TW*0.62);
     t.x=ox+t.gc*cw+(cw-TW)/2;
     t.y=oy+t.gr*ch+(ch-TH)/2+ch*0.05;
     t.w=TW; t.h=TH;
@@ -1593,7 +1593,7 @@ function drawTable(t,i){
   if(!t.w)return;
   const {S}=getLay();
   const {x,y,w,h,state,meal,cust}=t;
-  const sh=S*2.6;                 // çapraz shear (RC diyagonal his)
+  const sh=S*3.6;                 // çapraz shear (RC diyagonal his)
   const cx=x+w/2+sh/2, cy=y+h/2;  // görsel merkez
 
   const TC={
@@ -1606,40 +1606,48 @@ function drawTable(t,i){
 
   // Paralelkenar köşeleri (üst kenar sağa kaymış)
   const TLx=x+sh, TRx=x+w+sh, BLx=x, BRx=x+w;
-  const TY=y, BY=y+h, TH3=S*2.1; // ön yüz kalınlığı
+  const TY=y, BY=y+h, TH3=S*2.5; // ön yüz kalınlığı
 
   // ── ZEMİN GÖLGESİ ──
   G.fillStyle='rgba(0,0,0,0.22)';
   G.beginPath();G.ellipse(cx, BY+S*1.2, w*0.55, S*1.7, 0, 0, Math.PI*2);G.fill();
 
   // ── SANDALYE ÇİZERLERİ ──
-  function backChair(bx){ // masa arkasında, küçük
+  function backChair(bx){ // masa arkasında, sırtlığı görünen
     G.fillStyle='#8a5e28';
-    G.beginPath();G.roundRect(bx,TY-S*2.4,S*2.4,S*2.6,S*0.4);G.fill();
-    G.strokeStyle='#5e3c14';G.lineWidth=S*0.22;
-    G.beginPath();G.roundRect(bx,TY-S*2.4,S*2.4,S*2.6,S*0.4);G.stroke();
-    G.fillStyle='rgba(255,255,255,0.12)';
-    G.fillRect(bx+S*0.25,TY-S*2.15,S*1.9,S*0.7);
-  }
-  function frontChair(bx){ // masa önünde, yüksek sırtlık bize dönük
-    G.fillStyle='rgba(0,0,0,0.15)';
-    G.beginPath();G.ellipse(bx+S*1.3,BY+S*3.1,S*1.5,S*0.5,0,0,Math.PI*2);G.fill();
-    const fg=G.createLinearGradient(bx,BY+S*0.2,bx,BY+S*3);
-    fg.addColorStop(0,'#a8773a');fg.addColorStop(1,'#7e5424');
-    G.fillStyle=fg;
-    G.beginPath();G.roundRect(bx,BY+S*0.2,S*2.6,S*2.9,S*0.45);G.fill();
+    G.beginPath();G.roundRect(bx,TY-S*3.1,S*2.9,S*3.3,S*0.45);G.fill();
     G.strokeStyle='#5e3c14';G.lineWidth=S*0.24;
-    G.beginPath();G.roundRect(bx,BY+S*0.2,S*2.6,S*2.9,S*0.45);G.stroke();
-    // sırtlık çıtaları
+    G.beginPath();G.roundRect(bx,TY-S*3.1,S*2.9,S*3.3,S*0.45);G.stroke();
     G.strokeStyle='rgba(70,45,15,0.5)';G.lineWidth=S*0.2;
     for(let li2=1;li2<3;li2++){
-      G.beginPath();G.moveTo(bx+S*2.6*li2/3,BY+S*0.5);G.lineTo(bx+S*2.6*li2/3,BY+S*2.8);G.stroke();
+      G.beginPath();G.moveTo(bx+S*2.9*li2/3,TY-S*2.8);G.lineTo(bx+S*2.9*li2/3,TY-S*0.3);G.stroke();
     }
     G.fillStyle='rgba(255,255,255,0.12)';
-    G.fillRect(bx+S*0.25,BY+S*0.45,S*2.1,S*0.6);
+    G.fillRect(bx+S*0.3,TY-S*2.85,S*2.3,S*0.7);
+  }
+  function frontChair(bx){ // masa önünde, yüksek sırtlık bize dönük (RC!)
+    const fcW=S*3.1, fcH=S*3.9, fcY=BY+S*0.6;
+    G.fillStyle='rgba(0,0,0,0.16)';
+    G.beginPath();G.ellipse(bx+fcW/2,fcY+fcH,fcW*0.55,S*0.55,0,0,Math.PI*2);G.fill();
+    const fg=G.createLinearGradient(bx,fcY,bx,fcY+fcH);
+    fg.addColorStop(0,'#a8773a');fg.addColorStop(1,'#764e20');
+    G.fillStyle=fg;
+    G.beginPath();G.roundRect(bx,fcY,fcW,fcH,S*0.5);G.fill();
+    G.strokeStyle='#5e3c14';G.lineWidth=S*0.26;
+    G.beginPath();G.roundRect(bx,fcY,fcW,fcH,S*0.5);G.stroke();
+    // Sırtlık çıtaları (3 dikey)
+    G.strokeStyle='rgba(70,45,15,0.55)';G.lineWidth=S*0.22;
+    for(let li2=1;li2<3;li2++){
+      G.beginPath();G.moveTo(bx+fcW*li2/3,fcY+S*0.4);G.lineTo(bx+fcW*li2/3,fcY+fcH-S*0.9);G.stroke();
+    }
+    // Üst tutamak kavisi
+    G.fillStyle='#8a5e28';
+    G.beginPath();G.roundRect(bx-S*0.1,fcY-S*0.15,fcW+S*0.2,S*0.7,S*0.35);G.fill();
+    G.fillStyle='rgba(255,255,255,0.14)';
+    G.fillRect(bx+S*0.3,fcY+S*0.5,fcW-S*0.6,S*0.55);
   }
   function leftChair(){ // müşterinin oturduğu (mevcut anchor korunur)
-    const cx0=x-S*3.2, cy0=y+h*0.04, scW=S*2.7, scH=h*0.92;
+    const cx0=x-S*2.9, cy0=y+h*0.08, scW=S*2.8, scH=h*0.88;
     G.fillStyle='rgba(0,0,0,0.15)';
     G.beginPath();G.ellipse(cx0+scW/2,cy0+scH,scW*0.55,S*0.55,0,0,Math.PI*2);G.fill();
     const cg=G.createLinearGradient(cx0,cy0,cx0,cy0+scH);
@@ -1649,9 +1657,11 @@ function drawTable(t,i){
     G.strokeStyle='#5e3c14';G.lineWidth=S*0.26;
     G.beginPath();G.roundRect(cx0,cy0,scW,scH,S*0.5);G.stroke();
     G.fillStyle='#8a5e28';
-    G.beginPath();G.roundRect(cx0-S*0.2,cy0-S*2.3,S*0.85,scH+S*2.55,S*0.35);G.fill();
+    G.beginPath();G.roundRect(cx0-S*0.05,cy0-S*2.5,S*0.9,scH+S*2.75,S*0.35);G.fill();
     G.strokeStyle='#5e3c14';G.lineWidth=S*0.18;
-    G.beginPath();G.roundRect(cx0-S*0.2,cy0-S*2.3,S*0.85,scH+S*2.55,S*0.35);G.stroke();
+    G.beginPath();G.roundRect(cx0-S*0.05,cy0-S*2.5,S*0.9,scH+S*2.75,S*0.35);G.stroke();
+    G.fillStyle='rgba(255,255,255,0.12)';
+    G.fillRect(cx0+S*0.1,cy0-S*2.3,S*0.35,scH+S*2.2);
   }
 
   // Arka sandalyeler (masadan önce çizilir → arkasında kalır)
@@ -1759,8 +1769,8 @@ function drawTable(t,i){
   G.imageSmoothingEnabled=false;
 
   // Ön sandalyeler (masadan SONRA → RC'deki gibi önde dururlar)
-  frontChair(BLx+w*0.16);
-  frontChair(BLx+w*0.56);
+  frontChair(BLx+w*0.13);
+  frontChair(BLx+w*0.55);
 
   // ── DURUM ETİKETİ ──
   const lbls={wait:'TIKLA!',cook:'PİŞİYOR',done:'HAZIR!'};
@@ -1821,7 +1831,7 @@ function drawTable(t,i){
 
 /* ══ RC TARZI CHİBİ İNSAN ÇİZİMİ ══ */
 function drawPerson(px, py, o){
-  const S=o.S, bob=o.bob||0;
+  const S=o.S*1.35, bob=(o.bob||0)*1.2;  // RC: iri karakterler
   const hr=S*2.15;              // RC: koca kafa!
   const bw=S*3.1, bh=S*2.5;     // ufak gövde
   // Ayak gölgesi
@@ -1958,8 +1968,8 @@ function drawWorkers(){
     }
 
     // İsim etiketi
-    const ntW=S*8;
-    const ntY=topY-(w.isOwner?S*2.1:S*0.4)-S*2.1;
+    const ntW=S*9.5;
+    const ntY=topY-(w.isOwner?S*2.3:S*0.4)-S*2.2;
     G.fillStyle='rgba(10,10,20,0.85)';
     G.beginPath();G.roundRect(px-ntW/2,ntY,ntW,S*2,S*0.5);G.fill();
     G.strokeStyle=w.status==='busy'?'#40e060':of[0];
